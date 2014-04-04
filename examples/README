@@ -1,0 +1,456 @@
+<h1 style="font-size:150%;"> Tale 1: using XDM to calculate molecular geometries and frequencies</h1>
+<div style="font-size:90%;">
+**Plot**
+([escher](http://gatsby.ucmerced.edu/downloads/tales/001/co2_n2o.m) 
+[xyz](http://gatsby.ucmerced.edu/downloads/tales/001/co2_n2o.xyz)), 
+**Inputs** 
+([energy](http://gatsby.ucmerced.edu/downloads/tales/001/co2_n2o_sp.gjf) 
+[opt](http://gatsby.ucmerced.edu/downloads/tales/001/co2_n2o_opt.gjf) 
+[freq](http://gatsby.ucmerced.edu/downloads/tales/001/co2_n2o_freq.gjf)),
+**Script gxdmopt**
+([dz](http://gatsby.ucmerced.edu/downloads/tales/001/gxdmopt_dz.sh)
+[tz](http://gatsby.ucmerced.edu/downloads/tales/001/gxdmopt_tz.sh))
+</div>
+
+The objective of this Tale is to demonstrate the use of [[postg]]
+combined with [Gaussian](http://www.gaussian.com/) to calculate
+energies, molecular geometries and frequencies using [[XDM]]-enabled
+exchange-correlation functionals. There are two ways of doing this. In
+the simplest way, Gaussian writes a wfx file that is subsequently
+passed to postg, which calculates the dispersion
+contribution. However, in order to optimize a molecular geometry,
+postg needs to be coupled to the optimization algorithm in Gaussian
+using the `external` keyword, for which purpose a script, named
+`gxdmopt.sh`, is provided along with postg. The idea of using
+`external` belongs to Felix
+Kannemann<cite>thesisfelix,kannemann2010</cite>, who also coded the
+first versions of postg and `gxdmopt.sh`. Extensive use of what
+follows has been made in <cite>xdmhybrid</cite>, where we benchmarked
+the XDM-corrected versions of a number popular functionals for
+non-covalent interactions and thermochemistry. This article also
+contains the damping function parameters, which can be accessed
+[here](XDM damping function parameters).
+
+In [[XDM]] the total energy is written as:
+
+$E_{total} = E_{base} + E_{XDM}$
+
+where $E_{base}$ is the energy coming from the underlying
+density functional and $E_{XDM}$ is the XDM dispersion
+energy, which in turn is written as a pairwise summation:
+
+$E_{XDM} = \sum_{n=6,8,10} \sum_{i>j} \frac{C_n f_n(R_{ij})}{R_{ij}^n}$
+
+$C_n$ are the dispersion interaction coefficients, $f_n$ is the
+damping function and $R_{ij}$ is the internuclear separation between
+atoms i and j.  XDM is formally a meta-GGA, but we usually forego the
+self-consistent implementation of $E_{XDM}$ and, instead, calculate
+the dispersion energy *a posteriori* using the electron density
+obtained from the base exchange-correlation potential alone. In
+addition, we calculate the energy derivatives with respect to the
+nuclear positions (that is, the XDM contributions to forces and
+frequencies) assuming that the $C_n$ coefficients are constant and
+independent of the geometry. In both instances, our assumptions make
+the implementation considerably easier, and they have been shown to be
+very good approximations for Langreth
+functionals<cite>thonhauser2007</cite> and for XDM
+itself<cite>kong2009</cite>. The effect of the dispersion term on the
+self-consistent density is down to $10^{-5}$ atomic units, with
+similarly negligible effects on energies and forces.
+
+In practice, an XDM calculation in Gaussian involves obtaining the
+wavefuntion description (the wfn file, with `output=wfn`, the wfx
+file, with `output=wfx`, or the formatted checkpoint file using `%chk`
+and the `formchk` utility) and then using [[postg]] to calculate the
+dispersion energy and related quantities.  Let's use an example to
+illustrate how this woks: the carbon dioxide (CO~2~) and nitrous oxide
+(N~2~O) gas-phase dimer, for which an accurate CCSD(T)/aug-cc-pVTZ
+potential energy surface (PES) has been obtained recently by Zheng et
+al.<cite>zheng2013</cite>. There are several local minima in the PES
+of CO~2~-N~2~O dimer, the most stable of which is a parallel displaced
+conformation:
+
+[[File:T1_co2_n2o_with_labels.png|400px|center]]
+
+This plot (without the labels) can be generated via [[escher]] by
+running
+[this script](http://gatsby.ucmerced.edu/downloads/tales/001/co2_n2o.m)
+and using this
+[xyz file](http://gatsby.ucmerced.edu/downloads/tales/001/co2_n2o.xyz)
+as the molecular geometry. Now, let's do a single point calculation at
+the geometry of that xyz file using XDM. The Gaussian
+[input](http://gatsby.ucmerced.edu/downloads/tales/001/co2_n2o_sp.gjf)
+is:
+
+    %nprocs=4
+    %mem=2GB
+    # b3lyp aug-cc-pvtz int(grid=ultrafine) output=wfx
+
+    title
+    
+    0 1
+    C     1.109882   -1.344582    0.000000 
+    O     2.255409   -1.127306    0.000000 
+    O    -0.036542   -1.570343    0.000000 
+    N    -1.182527    1.337759    0.000000 
+    O     0.000000    1.495618    0.000000 
+    N    -2.304648    1.188489    0.000000 
+    
+    co2_n2o.wfx
+
+We use four processors (`%nprocs=4`) and a maximum memory of 2GB for
+the calculation. The exchange-correlation functional is B3LYP, and the
+basis set is aug-cc-pVTZ. The `grid` option in the
+[`int` keyword](http://www.gaussian.com/g_tech/g_ur/k_integral.htm)
+controls the size of the grid for the integration of the
+exchange-correlation energies. Because we want very accurate energies
+and the intermolecular space is important in non-covalent complexes,
+we use `int=(grid=ultrafine)` in almost every input. The `output=wfx`
+keyword tells Gaussian to write the wavefunction file specified at the
+bottom of the input (`co2_n2o.wfx`). After running this input through
+Gaussian:
+
+    $ g09 co2_n2o_sp.gjf
+
+the file `co2_n2o.wfx` is generated. This file is passed to 
+[[postg]] using the command:
+
+    $ postg 0.6356 1.5119 co2_n2o.wfx b3lyp
+	
+The two numbers in the command line are the $a_1$ and $a_2$
+[[XDM damping function parameters]] for B3LYP/aug-cc-pVTZ. The final
+`b3lyp` word is necessary to inform postg that we want to use the
+atomic volumes for this functional. The output generated by postg
+starts with the information gathered from the wfx file and the command
+line, which is self-explanatory:
+
+    * POSTG OUTPUT
+    a1              0.635600
+    a2(ang)         1.511900
+    a_hf        b3lyp
+    file          co2_n2o.wfx
+    filetype      wfx
+    natoms             6
+    use ECPs?         F
+    # n  At           x               y               z         nr    nl
+       1 C        2.0973728      -2.5408917       0.0000000     60    194
+       2 O        4.2621051      -2.1302996       0.0000000     60    194
+       3 O       -0.0690546      -2.9675180       0.0000000     60    194
+       4 N       -2.2346522       2.5279984       0.0000000     60    194
+       5 O       -0.0000000       2.8263086       0.0000000     60    194
+       6 N       -4.3551536       2.2459191       0.0000000     60    194
+    #
+    wfn type      closed-shell
+    MOs               22
+    primitives       432
+    charge          0.00
+    multiplicity       1
+
+Then, simple integrals, like the number of electrons, are reported:
+
+    nelec            44.000000
+
+The XDM moments and volumes go next:
+
+    moments and volumes 
+    # i At        <M1^2>             <M2^2>              <M3^2>           Volume              Vfree
+      1 C    4.8353356351E+00   6.2101051798E+01   1.1436557988E+03   2.9784216984E+01   3.5739786376E+01
+      2 O    5.1174684674E+00   3.9229457780E+01   3.9261986874E+02   2.1258584466E+01   2.2954305454E+01
+      3 O    5.0918388264E+00   3.8713590397E+01   3.8521304886E+02   2.1312276161E+01   2.2954305454E+01
+      4 N    4.3191558681E+00   4.4738294126E+01   6.4541397613E+02   2.4553028349E+01   2.7113474669E+01
+      5 O    5.1950160692E+00   4.0051214954E+01   4.1431825566E+02   2.1667717526E+01   2.2954305454E+01
+      6 N    5.7801170914E+00   5.3922524868E+01   6.6950762404E+02   2.5891580002E+01   2.7113474669E+01
+    #
+
+and then the Hirshfeld atomic charges <cite>hirshfeld1977</cite>,
+which are a sometimes-useful by-product of a postg run:
+
+    hirshfeld charges 
+    # i At        Charge
+      1 C    3.2699854444E-01
+      2 O   -1.6382556966E-01
+      3 O   -1.7315971225E-01
+      4 N    2.1670253772E-01
+      5 O   -1.3694526522E-01
+      6 N   -6.9849798661E-02
+    #
+
+The interaction coefficients and critical radii are calculated using
+the moments above. They are listed next, together with the interatomic
+distances: 
+
+    coefficients and distances (a.u.)
+    # i  j       dij            C6               C8               C10              Rc           Rvdw
+      1   1  0.000000E+00  2.392985896E+01  9.220059513E+02  3.921767944E+04  6.363909E+00  6.901977E+00
+      1   2  2.203327E+00  1.639270462E+01  5.042961495E+02  1.704819975E+04  5.679858E+00  6.467194E+00
+      [...]
+      6   6  0.000000E+00  2.048657269E+01  5.733557163E+02  1.698013516E+04  5.365953E+00  6.267677E+00
+    #
+
+Finally, the calculated dispersion energy appears in the output:
+
+    dispersion energy  -5.217724823716E-03
+
+followed by the energy of the underlying DFT calculation as reported
+in the wfx file:
+
+    scf energy  -3.734012518154E+02
+
+and the addition of the two:
+
+    total energy (SCF+XDM)  -3.734064695402E+02
+
+The contribution of dispersion to forces and frequencies is reported
+after this:
+
+    dispersion forces 
+    # i          Fx                   Fy                   Fz
+      1  -2.135853840442E-04   2.923292276095E-04   0.000000000000E+00
+      2  -2.474648647977E-04   1.377513775069E-04   0.000000000000E+00
+      3  -6.817132113704E-05   4.849782277824E-04   0.000000000000E+00
+      4   1.946227354794E-04  -2.863379303027E-04   0.000000000000E+00
+      5   6.767002514231E-05  -4.568959155913E-04   0.000000000000E+00
+      6   2.669288093573E-04  -1.718249870048E-04   0.000000000000E+00
+    #
+    dispersion force constant matrix 
+    # i  xyz   j   xyz    Exixj 
+      1   1   1   1   2.041147177391E-06
+      1   2   1   1   4.367773617561E-05
+      [...]
+      6   3   6   3   5.517168445286E-05
+    #
+
+This is all very well, but in order to calculate a molecular geometry
+it is necessary to have some program that adds the dispersion forces
+to the base forces and drives the optimization algorithm. Fortunately,
+this can be done using Gaussian's
+[`external` keyword](http://www.gaussian.com/g_tech/g_ur/k_external.htm). The
+idea is as follows: the geometry is passed to a Gaussian input with
+the `external` keyword in it. `external` points to a script we
+provide, which is a copy of a template script (`gxdmopt.sh`) we
+provide with postg. Gaussian uses its geometry optimization algorithm
+and, whenever it requires the calculation of the energies and forces
+at a certain geometry, it calls the external script and passes the
+atomic positions of that intermediate point to the
+script. `gxdmopt.sh` then reads this information and executes a second
+Gaussian calculation at that geometry, with `output=wfx` in the
+route. After the calculation is done, the script calls postg on the
+wfx file and obtains the dispersion contributions. The total energy
+and forces are calculated by adding the two, and are passed back to
+the driver Gaussian calculation, which then proceeds with the next
+point according to the optimization algorithm.
+
+This may sound complex but in practice it's not that bad. Let's use
+the optimization of CO~2~-N~2~O dimer as an example. The
+[input file](http://gatsby.ucmerced.edu/downloads/tales/001/co2_n2o_opt.gjf)
+for the optimization is:
+
+    # external='./gxdmopt.sh' opt=nomicro 
+    
+    title
+    
+    0 1
+    C     1.109882   -1.344582    0.000000 
+    O     2.255409   -1.127306    0.000000 
+    O    -0.036542   -1.570343    0.000000 
+    N    -1.182527    1.337759    0.000000 
+    O     0.000000    1.495618    0.000000 
+    N    -2.304648    1.188489    0.000000 
+
+The `external` keyword calls the `gxdmopt.sh` script (which is
+provided in the `src/` subdirectory of the [[postg]] distribution). We
+ask Gaussian to optimize the geometry using the
+[`opt` keyword](http://www.gaussian.com/g_tech/g_ur/k_opt.htm). The
+`external` keyword is routinely used in the context of QM/MM
+calculations (ONIOM, and such) so, by default, a hybrid QM+MM
+optimization algorithm is used. The MM part of the method performs
+what are called *microiterations* in order to fully relax the MM part
+of the molecule after a QM step (for instance, see
+<cite>vreven2006</cite>). Since we don't want that, we deactivate the
+microiterations using the `nomicro` option to `opt`. The rest of the
+input is the same as a normal Gaussian calculation.
+
+Since the `gxdmopt.sh` script is running the actual calculations, it
+needs to be modified to suit our problem at hand. This is a copy
+of the [gxdmopt.sh](http://gatsby.ucmerced.edu/downloads/tales/001/gxdmopt_dz.sh)
+that we will use for this optimization. The only part of the script
+that needs tweaking is the initial block (conveniently labeled
+`modify this`). In our case, it reads:
+
+    ## modify this
+    chf="b3lyp"
+    c1=0.6224
+    c2=1.7068
+    basis="aug-cc-pvdz"
+    ecp=""
+    G09="g09"
+    POSTG="postg"
+    verbose=""
+    guesstrick="co2_n2o.chk"
+    cat > $2.route <<EOF
+    %mem=2GB
+    %nprocs=4
+    #p b3lyp int(grid=ultrafine)
+    EOF
+    #########
+
+The `chf`, `c1` and `c2` parameters are passed to the underlying
+postg, and should match the functional you are using and the
+[[XDM damping function parameters]] for the functional and basis set
+combination. The `basis` keyword can either be a file containing the
+basis set description, which is passed to Gaussian using the `gen`
+keyword, or, if the file is not present, the string is interpreted as
+a basis set keyword and is written to the route section directly.
+Geometry optimizations are usually less sensitive to basis set effects
+than binding energies <cite>xdmbasis</cite>, so we use the
+comparatively small aug-cc-pVDZ basis set. The `ecp` option allows
+passing a file containing a pseudopotential description (via
+`pseudo=read`) to Gaussian, which is useful for molecules containing
+heavy elements. In our case, we don't need any, so `ecp` is
+empty. `G09` and `POSTG` are the paths to the corresponding binaries
+(I have both in my `$PATH`, so I don't need to specify the full
+path). 
+
+`verbose` controls the amount of output produced by the
+calculation. By default, the output of the underlying Gaussian
+calculations at each intermediate step is parsed and only a limited
+amount of information is propagated to the driver calculation's output
+(see below). Since the intermediate output files are deleted on exit,
+there is the problem that, if there is an error in the calculation, we
+won't have the information necessary to figure out what when wrong. By
+using a non-null `verbose` option, the entire output of the
+intermediate Gaussian and postg runs is copied into the output. The
+drawback is that `verbose` tends to generate massive output files,
+particularly for larger systems.
+
+The `guesstrick` keyword allows passing a checkpoint file from one
+intermediate geometry to the next. That is, during the first iteration
+the underlying Gaussian is run with `%chk=co2_n2o.chk`. Subsequent
+steps in the optimization use the same checkpoint file with
+[`guess=read`](http://www.gaussian.com/g_tech/g_ur/k_guess.htm) so
+that the converged wavefunction of the previous step is used as
+initial guess for the next. This makes the optimization faster because
+each step takes less iterations and, in many cases, it prevents
+problems related to the SCF not converging at all.
+
+The final part of the `modify this` block contains the part of the
+route section of the intermediate Gaussian calculations that is not
+handled by the script. This includes the functional specification
+(`b3lyp`), the ultrafine grid, the number of processors, and the
+allocated memory. Note that the basis set keyword, the `output=wfx`
+and, if applicable, the `pseudo` and `guess` keywords are handled
+automatically by the script.
+
+The geometry relaxation is run using:
+
+    $ g09 co2_n2o.gjf
+	
+The output (`co2_n2o.log`) looks like a normal Gaussian optimization
+output, except in that the SCF part is replaced by the call to the
+external script. At the non-verbose level, three pieces of information
+are written to the output at every geometry, which are delimited by
+`#XDM#` markers. For instance, one of the geometry steps in our
+example is: 
+
+    #XDM# tail -n 50 logfile
+     ClnCor:  largest displacement from symmetrization is 9.70D-17 for atom     5.
+     [...]
+     Normal termination of Gaussian 09 at Fri Aug 30 16:53:14 2013.
+    #XDM# grep 'Delta-E' logfile
+     E= -373.305551769104     Delta-E=       -0.001393793654 Rises=F Damp=F
+     E= -373.306163229470     Delta-E=       -0.000611460365 Rises=F Damp=F
+     E= -373.306931231040     Delta-E=       -0.000768001570 Rises=F Damp=F
+     E= -373.307528515398     Delta-E=       -0.000597284358 Rises=F Damp=F
+     E= -373.307531552691     Delta-E=       -0.000003037293 Rises=F Damp=F
+     E= -373.307531900833     Delta-E=       -0.000000348142 Rises=F Damp=F
+     E= -373.307531966454     Delta-E=       -0.000000065622 Rises=F Damp=F
+     E= -373.307531973375     Delta-E=       -0.000000006921 Rises=F Damp=F
+     E= -373.307531975143     Delta-E=       -0.000000001768 Rises=F Damp=F
+     E= -373.307531975160     Delta-E=       -0.000000000017 Rises=F Damp=F
+    #XDM# energies from postg output (hartree)
+    dispersion energy  -3.883365074738E-03
+    scf energy  -3.733075319752E+02
+    total energy (SCF+XDM)  -3.733114153403E+02
+    --------------------------------------------------------------------------------
+    Recovered energy= -373.311415340     dipole=      0.000000000000      0.000000000000      0.000000000000
+    [...]
+
+The three `#XDM#` blocks contain, in order, the last 50 lines of the
+intermediate output file, the 'Delta-E' lines, which give the energy
+steps in the SCF cycle, and the energy information from the postg
+output. These can help in determining what went wrong in case of an
+error, though using the `verbose` flag is unavoidable for the more
+exotic failures. Particularly, the Delta-E line can be used to spot
+problems with SCF convergence, which tend to be responsible for the
+majority of the occasional errors.
+
+Regarding our example, the result of the described calculation gives a
+geometry for the CO~2~-N~2~O dimer at the B3LYP-XDM/aug-cc-pVDZ level
+which is $R = 3.528$, $\theta_1 = 119.8$, and $\theta_2 = 122.9$,
+where the variables have the meaning as in the picture above. These
+results compare well with the CCSD(T)/aug-cc-pVTZ results by Zheng et
+al.<cite>zheng2013</cite>: $R = 3.429$, $\theta_1 = 118.2$, and
+$\theta_2 = 121.5$.
+
+The `external` keyword can be used to perform any kind of calculation
+in Gaussian, not just optimizations. For instance, a single-point
+calculation would use this route section:
+
+    # external='./gxdmopt.sh' 
+	
+which is arguably easier than manually writing the `wfx` file and then
+running postg.  The `gxdmopt.sh` script is able to handle frequency
+calculations as well. As illustration, let's calculate the
+intermolecular frequencies for the CO~2~-N~2~O dimer and compare to
+the coupled cluster results in the literature. In order to do so, we
+use the `freq` keyword to obtain the frequencies after the geometry
+optimization, as in
+[this input](http://gatsby.ucmerced.edu/downloads/tales/001/co2_n2o_freq.gjf):
+
+    # external='./gxdmopt.sh' opt=nomicro freq
+
+and because we want higher accuracy we use the aug-cc-pVTZ basis set,
+so the
+[`gxdmopt.sh` script](http://gatsby.ucmerced.edu/downloads/tales/001/gxdmopt_tz.sh)
+now reads:
+
+    ## modify this
+    chf="b3lyp"
+    c1=0.6356 
+    c2=1.5119
+    basis="aug-cc-pvtz"
+    ecp=""
+    G09="g09"
+    POSTG="postg"
+    verbose=""
+    guesstrick="co2_n2o.chk"
+    cat > $2.route <<EOF
+    %mem=2GB
+    %nprocs=4
+    #p b3lyp int(grid=ultrafine)
+    EOF
+    #########
+
+The `modify this` block is practically the same as above, except that
+now the basis set is aug-cc-pVTZ and the damping function parameters
+are different.
+
+The Gaussian calculation takes longer this time. The equilibrium
+geometry is practically the same as with aug-cc-pVDZ, with $R =
+3.525$, $\theta_1 = 120.9$, and $\theta_2 = 122.1$. The calculated
+intermolecular frequencies are 26.58, 35.59, 51.38, and 109.30
+cm$^{-1}$, which compare relatively well with the coupled-cluster
+results in the paper: 25.76, 32.54, 44.61, and 96.40 cm$^{-1}$.
+
+Of course, more complex inputs involving the `gxdmopt.sh` script and
+postg are possible. For instance, we could optimize with an
+XDM-corrected functional for a basis set, then use `Link1` to read the
+final geometry and do something else. With a slight modification to
+the script, it may also be coupled to different electronic structure
+programs, a point we will discuss in the future.
+
+[[User:Aoterodelaroza|Aoterodelaroza]] ([[User talk:Aoterodelaroza|talk]]) 19:25, 30 August 2013 (PDT)
+
+----
+{{Articles_all}}
+

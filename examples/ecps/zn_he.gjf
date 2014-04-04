@@ -1,0 +1,8 @@
+# external='./gxdmopt.sh' opt=nomicro
+
+zn he dimer
+
+0  1
+He 0. 0. 0.
+Zn 0. 0. 4.0
+

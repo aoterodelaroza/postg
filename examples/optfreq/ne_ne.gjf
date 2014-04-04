@@ -1,0 +1,8 @@
+#p external='./gxdmopt.sh' opt=nomicro freq
+
+title
+
+0 1
+Ne	0.00 0.00 0.00
+Ne	0.00 0.00 3.090
+

@@ -1,0 +1,97 @@
+# quantum espresso
+functional      a1   a2 (ang) MAPD nset
+pw86pbe      0.2863  2.7707   13.4  49
+b86bpbe,atpw 0.2294  2.8024   12.2  49
+b86bpbe,pslb 0.6082  1.5834   12.0  49
+pbe          0.0000  3.8036   14.6  49 (*)
+blyp,pslb    0.4615  1.5830   15.2  49
+blyp,atpw    0.2344  2.3118   14.8  49
+revpbe       0.3454  1.9225   14.9  49     (old)
+pbesol       0.0000  4.1503   18.9  49 (*) (old)
+(*) fixed a1 or a2 parameter in the optimization.
+
+# DFTBA
+functional      a1     a2(ang)  MAPD nset
+default g09   1.1968  -0.2195   18.6  34 # default prm g09
+
+# gaussian basis set, aug-cc-pvtz
+functional      a1     a2(ang)  MAPD nset
+pw86pbe       0.7564   1.4545   11.1  65
+b3lyp         0.6356   1.5119    6.4  49
+b3pw91        0.6002   1.4043   13.1  49
+b3p86         1.0400   0.3741   12.4  49
+pbe0          0.4186   2.6791   10.4  49
+camb3lyp      0.3248   2.8607    9.3  65
+b97-1         0.1998   3.5367   12.3  49
+bhalfandhalf  0.5610   1.9894    9.8  65
+blyp          0.7647   0.8457    9.4  49
+pbe           0.4492   2.5517   14.2  49
+lcwpbe        1.0149   0.6755    7.3  49
+tpss          0.6612   1.5111   10.8  49
+b97d (-d)     0.6484   1.1589   12.9  49
+
+# gaussian basis set, aug-cc-pvdz
+functional      a1     a2(ang)  MAPD nset
+pw86pbe       0.6736   1.9327   16.8  49
+b3lyp         0.6224   1.7068   10.4  49
+pbe0          0.1389   3.8310   14.2  49
+camb3lyp      0.1849   3.5140   13.6  49
+b97-1         0.0000   4.4443   17.4  49 (*)
+bhalfandhalf  0.1247   3.5725   10.1  49
+blyp          0.9742   0.3427   11.0  49
+pbe           0.2061   3.5486   19.3  49
+lcwpbe        1.1800   0.4179    8.3  49
+(*) fixed a1 or a2 parameter in the optimization.
+
+# gaussian basis set, aug-cc-pvtz(spd)
+functional      a1     a2(ang)  MAPD nset
+lcwpbe        0.9045   1.0230    7.4  49
+lcwpbe(tc,w4) 1.0179   0.7193    6.8  40 (no chlorine, sulphur)
+b3lyp(tc)     0.4963   1.9437    3.9  40
+
+# gaussian basis set, pc2-erin1
+functional      a1     a2(ang)  MAPD nset
+lcwpbe(tc,w4) 0.6416   1.7880   7.8  49
+lcwpbe        0.5922   1.9441   6.5  49
+b3lyp         0.5166   1.8829   7.9  49
+blyp          0.7065   1.0273  11.7  49
+pbe           0.2280   3.2444  16.8  49
+pbe0          0.1980   3.3552  12.2  49
+
+# gaussian basis set, 6-31+G*
+functional      a1     a2(ang)  MAPD nset
+pw86pbe       0.6336   1.9148   16.9  49
+b3lyp         0.4515   2.1357   11.4  49
+pbe0          0.0845   3.7940   14.5  49
+camb3lyp      0.2315   3.2123   13.3  49
+b97-1         0.0118   4.1784   16.3  49
+bhalfandhalf  0.1483   3.3435   12.2  49
+blyp          0.5942   1.4555   15.3  49
+pbe           0.2445   3.2596   18.6  49
+lcwpbe        0.8134   1.3736   10.0  49
+
+# gaussian basis set, 6-31+G**
+functional      a1     a2(ang)  MAPD nset
+pw86pbe       0.6935   1.7519   16.6  49
+b3lyp         0.4306   2.2076   11.2  49
+pbe0          0.1163   3.7191   14.3  49
+camb3lyp      0.2365   3.2081   12.8  49
+b97-1         0.0429   4.1090   15.8  49
+bhalfandhalf  0.1432   3.3705   11.8  49
+blyp          0.5653   1.5460   14.9  49
+pbe           0.2746   3.1857   17.8  49
+lcwpbe        0.8934   1.1466   10.1  49
+
+# gaussian basis set, 6-31G* for stacks
+functional      a1    a2 (ang)  MAPD nset
+pw86pbe       0.0255   3.8471    8.7  12
+b3lyp         0.3795   2.4516    5.3  12
+pbe0          0.2817   3.1852    4.2  12
+camb3lyp      0.5549   2.3185    5.0  12
+b97-1         0.6134   2.2096    7.0  12
+bhalfandhalf  1.2730   -0.1701   8.8  12
+blyp          0.0090   3.4136   11.6  12
+pbe           0.0073   3.9745    9.0  12
+lcwpbe(g09)   0.6611   1.9747    3.3  12
+lcwpbe(tc,w4) 0.5668   2.2866    2.9  12
+
