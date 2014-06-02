@@ -1,19 +1,21 @@
 #!/bin/bash
 
 ## modify this
-chf="lcwpbe"
-c1=0.9453
-c2=1.1217
-export TeraChem=/home/cisborn/manchego_home/working_tc/production/terachem
-export LD_LIBRARY_PATH=/usr/local/cuda-5.0/lib64:$LD_LIBRARY_PATH
-TERACHEM="/home/cisborn/manchego_home/working_tc/production/terachem/int"
-POSTG="/home/cisborn/manchego_home/xdm/postg/postg"
-verbose=""
+chf="b3lyp"
+c1=0.4515
+c2=2.1357
+export TeraChem=/home/cisborn/stable/production/terachem
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cm/shared/apps/cuda50/toolkit/current/lib64/
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cm/local/apps/cuda/libs/current/lib64
+export LD_LIBRARY_PATH
+TERACHEM="${TeraChem}/int"
+POSTG="/home/alberto/src/postg/postg"
+verbose="1"
 cat > $2.route <<EOF
 # charge, spin, run, coordinates set by the script
-basis        6-31g* 
-method       wpbe
-rc_w         0.4
+basis        6-31+gs
+method       b3lyp
+# rc_w         0.4
 maxit        100
 gpus         4  
 EOF
@@ -68,6 +70,7 @@ charge  $charge
 spinmult $spin
 run $run
 coordinates $2.xyz
+print_post_tc yes
 end
 EOF
 
@@ -75,11 +78,11 @@ EOF
 $TERACHEM $2.inp >& $2.inp.out
 
 if [ -n "$do1" ] ; then
-    grep -A $atoms 'Gradients' postg.tcfchk | tail -n $atoms > $2.fgauss
+    grep -A $atoms 'Gradients' post.tcfchk | tail -n $atoms > $2.fgauss
 fi
 
 # run postG
-$POSTG $c1 $c2 postg.tcfchk $chf > $2.pgout
+$POSTG $c1 $c2 post.tcfchk $chf > $2.pgout
 
 # energy
 e=$(grep 'total energy' $2.pgout | awk '{print $NF}')
@@ -99,7 +102,9 @@ if [ -n "$verbose" ] ; then
     echo "#XDM# terachem output" >> $4
     cat $2.inp.out >> $4
     echo "#XDM# tcfchk file" >> $4
-    cat postg.tcfchk >> $4
+    cat post.tcfchk >> $4
+    echo "#XDM# postg output file" >> $4
+    cat $2.pgout >> $4
 else
     echo "#XDM# tail -n 50 logfile" >> $4
     tail -n 10 $2.inp.out >> $4
