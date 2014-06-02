@@ -1,0 +1,4 @@
+# fortran objects and modules, binary
+*.mod 
+*.o
+postg
