@@ -1,7 +1,3 @@
-% postg README
-% Alberto Otero de la Roza
-% July 26, 2013
-
 Overview
 --------
 
@@ -203,8 +199,8 @@ And XDM applied to solid-state calculations:
 Copyright notice
 ----------------
 
-Copyright (c) 2013 Alberto Otero de la Roza, Felix Kannemann, Erin R. Johnson,
-Ross M. Dickson, Hartmut Schmider, and Axel D. Becke.
+Copyright (c) 2013-2015 Alberto Otero de la Roza, Felix Kannemann,
+Erin R. Johnson, Ross M. Dickson, Hartmut Schmider, and Axel D. Becke.
 
 postg is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
