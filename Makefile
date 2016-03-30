@@ -6,8 +6,8 @@ ifeq ($(DEBUG),1)
   LDFLAGS = -openmp
 else
   FC = ifort
-  FCFLAGS = -O2 -openmp
-  LDFLAGS = -O2 -openmp
+  FCFLAGS = -O2 -openmp -static
+  LDFLAGS = -O2 -openmp -static
 endif
 ### The GNU fortran compiler (gfortran)
 #ifeq ($(DEBUG),1)
