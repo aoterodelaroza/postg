@@ -67,7 +67,7 @@ program postg
   WRITE(IOUT,'("a2(ang)     ",F12.6)') c2br
   c2br=c2br/0.52917720859d0
 
-  if (narg == 4) then
+  if (narg >= 4) then
      call getarg(4,line)
      read (line,*,err=999) hfword
      lp = 1
@@ -100,6 +100,9 @@ program postg
         elseif (trim(lower(hfword)) == "b971" .or. trim(lower(hfword)) == "b97-1") then
            chf = chf_b971
            write(iout,'("a_hf        b971")')
+        elseif (trim(lower(hfword)) == "hf") then
+           chf = 1.0d0
+           write(iout,'("a_hf        hf")')
         else
            call error("postg","unknown functional",2)
         endif
@@ -112,7 +115,7 @@ program postg
 
   ! optional keywords
   usec9 = .false.
-  if (narg > 4) then
+  if (narg >= 5) then
      do i = 5, narg
         call getarg(i,line)
         if (trim(lower(line)) == 'c9') then
@@ -217,7 +220,7 @@ program postg
   write (iout,'("  a_hf = functional keyword. One of: ")')
   write (iout,'("         blyp,b3lyp,bhah,bhahlyp,bhandh,bhahlyp,bhandhlyp,camb3lyp,cam-b3lyp, ")')
   write (iout,'("         pbe,pbe0,lcwpbe,lc-wpbe,pw86,pw86pbe,b971,b97-1, or a number between 0.0 ")')
-  write (iout,'("         and 1.0 represnting the fraction of exact exchange. Default: 0.0.")')
+  write (iout,'("         and 1.0 representing the fraction of exact exchange. Default: 0.0.")')
   write (iout,*)
   write (iout,'("  optional = an optional keyword. One of: ")')
   write (iout,'("    c9: calculate the C9 dispersion coefficients (no contribution to the energy).")')
