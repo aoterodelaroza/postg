@@ -37,7 +37,7 @@ program postg
   type(molecule) :: mol
   type(tmesh) :: mesh
   character*(mline) :: line, wfnfil, hfword
-  logical :: ok
+  logical :: ok, usec9
   integer :: i, narg, idx, lp
   real*8 :: qpro, c1br, c2br, egauss, ntotal
   character*11 :: wfnext
@@ -48,7 +48,7 @@ program postg
 
   ! read command line
   narg = command_argument_count()
-  if (narg /= 3 .and. narg /= 4) goto 999
+  if (narg < 3) goto 999
   call getarg(1,line)
   read (line,*,err=999) c1br
   call getarg(2,line)
@@ -109,6 +109,19 @@ program postg
   else
      write(iout,'("a_hf        ",f12.6)') chf
   endif
+
+  ! optional keywords
+  usec9 = .false.
+  if (narg > 4) then
+     do i = 5, narg
+        call getarg(i,line)
+        if (trim(lower(line)) == 'c9') then
+           usec9 = .true.
+        else
+           call error("postg","unknown keyword " // trim(line),2)
+        endif
+     end do
+  end if
 
   ! read wfn and output some info
   idx = index(wfnfil,'.',.true.)
@@ -190,11 +203,24 @@ program postg
   enddo
   write (iout,'("#")')
 
-  call edisp(mol,c1br,c2br,egauss)
+  call edisp(mol,c1br,c2br,egauss,usec9)
 
   stop 
 
-999 write (iout,'(/"Usage: postg a1 a2(angstrom) wfnfile [a_hf]"/)')
+999 continue
+  write (iout,'(/"Usage: postg a1 a2(angstrom) wfnfile [a_hf] [optional]")')
+  write (iout,*)
+  write (iout,'("  a1,a2 = damping function coefficients. See: http://schooner.chem.dal.ca/wiki/XDM ")')
+  write (iout,*)
+  write (iout,'("  wfnfile = Gaussian wfn/wfx file ")')
+  write (iout,*)
+  write (iout,'("  a_hf = functional keyword. One of: ")')
+  write (iout,'("         blyp,b3lyp,bhah,bhahlyp,bhandh,bhahlyp,bhandhlyp,camb3lyp,cam-b3lyp, ")')
+  write (iout,'("         pbe,pbe0,lcwpbe,lc-wpbe,pw86,pw86pbe,b971,b97-1, or a number between 0.0 ")')
+  write (iout,'("         and 1.0 represnting the fraction of exact exchange. Default: 0.0.")')
+  write (iout,*)
+  write (iout,'("  optional = an optional keyword. One of: ")')
+  write (iout,'("    c9: calculate the C9 dispersion coefficients (no contribution to the energy).")')
   stop 1
 
 END program postg

@@ -1338,10 +1338,6 @@ contains
       1,2,2, 1,3,1, 1,4,0, 2,0,3, 2,1,2, 2,2,1, 2,3,0, 3,0,2,&
       3,1,1, 3,2,0, 4,0,1, 4,1,0, 5,0,0/),shape(li)) ! h
 
-!      5,0,0, 0,5,0, 0,0,5, 4,1,0, 4,0,1, 1,4,0, 0,4,1, 1,0,4,&
-!      0,1,4, 3,2,0, 3,0,2, 2,3,0, 0,3,2, 2,0,3, 0,2,3, 2,2,1, 2,1,2, 1,2,2,&
-!      3,1,1, 1,3,1, 1,1,3/),shape(li))
-
    ! identify the max coefficients
    maxc = 0d0
    do imo = 1, m%nmo
@@ -1591,14 +1587,16 @@ contains
    df=2.d0/3.d0*(2.d0*x-x**2-3.d0)/(x-2.d0)**2*expo23
  end subroutine xfuncs
 
- subroutine edisp(m,a1,a2,egauss)
+ subroutine edisp(m,a1,a2,egauss,usec9)
    type(molecule), intent(in) :: m
    real*8, intent(in) :: a1, a2, egauss
+   logical, intent(in) :: usec9
 
-   integer :: i, j, k1, k2
+   integer :: i, j, k, k1, k2
    real*8 :: d, atpol(m%n), fac, rvdw, c6, c8, c10, rc
-   real*8 :: c6com, c8com, c10com, xij(3), ifac
+   real*8 :: c6com, c8com, c10com, xij(3), xik(3), xjk(3), ifac
    real*8 :: e, f(3,m%n), q(3,m%n,3,m%n), qfac
+   real*8 :: dij, djk, dik, c9, qi, qj, qk
 
    do i = 1, m%n
       if (m%z(i) < 1) cycle
@@ -1654,6 +1652,36 @@ contains
       end do
    end do
    write (iout,'("#")')
+
+   if (usec9) then
+      write (iout,'("three-body dispersion coefficients (a.u.)")')
+      write (iout,'("# i  j  k            C9")')
+      do i = 1, m%n
+         if (m%z(i) < 1) cycle
+         do j = i, m%n
+            if (m%z(j) < 1) cycle
+            do k = i, m%n
+               if (m%z(k) < 1) cycle
+
+               xij = m%x(:,j)-m%x(:,i)
+               xik = m%x(:,k)-m%x(:,i)
+               xjk = m%x(:,k)-m%x(:,j)
+
+               dij = sqrt(dot_product(xij,xij))
+               dik = sqrt(dot_product(xik,xik))
+               djk = sqrt(dot_product(xjk,xjk))
+
+               qi = m%mm(1,i) / atpol(i)
+               qj = m%mm(1,j) / atpol(j)
+               qk = m%mm(1,k) / atpol(k)
+
+               c9 = m%mm(1,i)*m%mm(1,j)*m%mm(1,k)* (qi+qj+qk) / ((qi+qj)*(qi+qk)*(qj+qk))
+               write (iout,'(3(I3,X)1p,E16.9)') i, j, k, c9
+
+            end do
+         end do
+      end do
+   end if
 
    ! sum rules for the second derivatives
    do i = 1, m%n
