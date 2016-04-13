@@ -1594,9 +1594,9 @@ contains
 
    integer :: i, j, k, k1, k2
    real*8 :: d, atpol(m%n), fac, rvdw, c6, c8, c10, rc
-   real*8 :: c6com, c8com, c10com, xij(3), xik(3), xjk(3), ifac
+   real*8 :: c6com, c8com, c10com, xij(3), ifac
    real*8 :: e, f(3,m%n), q(3,m%n,3,m%n), qfac
-   real*8 :: dij, djk, dik, c9, qi, qj, qk
+   real*8 :: c9, qi, qj, qk
 
    do i = 1, m%n
       if (m%z(i) < 1) cycle
@@ -1660,16 +1660,8 @@ contains
          if (m%z(i) < 1) cycle
          do j = i, m%n
             if (m%z(j) < 1) cycle
-            do k = i, m%n
+            do k = j, m%n
                if (m%z(k) < 1) cycle
-
-               xij = m%x(:,j)-m%x(:,i)
-               xik = m%x(:,k)-m%x(:,i)
-               xjk = m%x(:,k)-m%x(:,j)
-
-               dij = sqrt(dot_product(xij,xij))
-               dik = sqrt(dot_product(xik,xik))
-               djk = sqrt(dot_product(xjk,xjk))
 
                qi = m%mm(1,i) / atpol(i)
                qj = m%mm(1,j) / atpol(j)
