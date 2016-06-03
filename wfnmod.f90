@@ -634,15 +634,19 @@ contains
 
     character*(mline) :: line, word, word1, word2, keyword, wrest
     integer :: nbas, ncshel, nshel
-    integer :: i, j, k, l, idum, idum1, ni, nj
-    real*8 :: rdum, norm
+    integer :: i, j, k, l, idum, idum1, ni, nj, k1, k2
+    real*8 :: rdum, norm, cons
     integer, allocatable :: ishlt(:), ishlpri(:), ishlat(:)
     integer, allocatable :: npribas(:), nbaspri(:)
-    real*8, allocatable :: exppri(:), ccontr(:), mocoef(:)
+    real*8, allocatable :: exppri(:), ccontr(:), mocoef(:), cpri(:)
     integer :: istat, nm, ifac, itypmax, isend
     logical :: isang
-    integer :: acent, nn, nl, nalpha
+    integer :: nn, nl, nalpha
     logical :: ok, isalpha
+
+    integer, parameter :: jshl0(0:3) = (/1, 2, 5,  11/) ! initial and final types for shell type
+    integer, parameter :: jshl1(0:3) = (/1, 4, 10, 20/) ! s, p, d, f
+    integer, parameter :: dfac(0:8) = (/1,1,1,2,3,8,15,48,105/) ! double factorials minus one
 
     line = ""
     m%name = file
@@ -683,6 +687,7 @@ contains
           m%nmo = 0
           m%nelec = 0
           nalpha = 0
+          m%wfntyp = -1
           do while(.true.)
              read(luwfn,'(A)',end=30) line
              if (index(lower(line),"[") /= 0) exit
@@ -691,15 +696,23 @@ contains
                 read(luwfn,'(A)',end=30) line
                 read (line,*) word1, word2
                 isalpha = (trim(lower(word2)) == "alpha")
+
                 ! occup
                 read(luwfn,'(A)',end=30) line
                 read (line,*) word, idum
-                if (idum == 1) then
+                if (idum == 1 .or. idum == 2) then
                    m%nmo = m%nmo + 1
                    m%nelec = m%nelec + idum
                    if (isalpha) then
                       nalpha = nalpha + 1
                    endif
+                   if (m%wfntyp < 0) then
+                      if (idum == 1) then
+                         m%wfntyp = 1
+                      else
+                         m%wfntyp = 2
+                      end if
+                   end if
                 elseif (idum == 0) then
                    continue
                 else
@@ -709,9 +722,9 @@ contains
                    read(luwfn,'(A)',end=30) line
                    do while (index(line,".") /= 0)
                       read (line,*) idum
+                      nbas = idum
                       read(luwfn,'(A)',end=30) line
                    end do
-                   nbas = idum
                 end if
              end if
           end do
@@ -731,10 +744,13 @@ contains
     allocate(mocoef(nbas*m%nmo),stat=istat)
     if (istat /= 0) call error('readmolden','alloc. memory for MO coefs',2)
 
-    ! always use open-shell (wfntyp = 1) and unit occupations for this format
-    m%wfntyp = 1
-    m%occ = 1
-
+    ! type of wavefunction
+    if (m%wfntyp == 1) then
+       call error('readmolden','open shells not working',2)
+    else
+       m%occ = 2
+    end if
+       
     ! rewind
     rewind(luwfn)
 
@@ -852,80 +868,77 @@ contains
     if (istat /= 0) call error('readmolden','could not allocate memory for itype',2)
     allocate(m%e(m%npri),stat=istat)
     if (istat /= 0) call error('readmolden','could not allocate memory for exponents',2)
-    allocate(m%c(m%nmo,m%npri),stat=istat)
+    allocate(m%c(m%nmo,m%npri),cpri(m%npri),stat=istat)
     if (istat /= 0) call error('readmolden','could not allocate memory for coeffs',2)
     allocate(npribas(m%npri),nbaspri(nbas),stat=istat)
     if (istat /= 0) call error('readmolden','could not allocate memory for pri/bas index',2)
+
+    ! normalize the coefficients from the basis set. 
+    ! one: normalize each primitive
+    nm = 0
+    nn = 0
+    do i = 1, ncshel
+       if (ishlt(i) > 3) &
+          call error('readmolden','can not do shells >3',2)
+
+       do j = jshl0(ishlt(i)), jshl1(ishlt(i))
+          do k = 1, ishlpri(i)
+             nn = nn + 1
+             cpri(nn) = ccontr(nm+k) * gnorm(j,exppri(nm+k))
+          end do
+       end do
+       nm = nm + ishlpri(i)
+    end do
+
+    ! normalize the coefficients from the basis set. 
+    ! two: normalize the basis functions
+    nm = 0
+    nn = 0
+    do i = 1, ncshel
+       do j = jshl0(ishlt(i)), jshl1(ishlt(i))
+          ! normalization constant for the basis function
+          norm = 0d0
+          do k1 = 1, ishlpri(i)
+             do k2 = 1, ishlpri(i)
+                norm = norm + cpri(nn+k1) * cpri(nn+k2) / (exppri(nm+k1)+exppri(nm+k2))**(ishlt(i)+3d0/2d0)
+             end do
+          end do
+          cons = pi**(3d0/2d0) * dfac(2*ishlt(i)) / 2**(ishlt(i))
+          norm = 1d0 / sqrt(norm * cons)
+
+          do k = 1, ishlpri(i)
+             nn = nn + 1
+             cpri(nn) = cpri(nn) * norm
+          end do
+       end do
+       nm = nm + ishlpri(i)
+    end do
+
+    ! build the wavefunctions coefficients for the primitives
     nn = 0
     nm = 0
     nl = 0
     do i = 1, ncshel
-       acent = ishlat(i)
-       if (ishlt(i) == 0) then
+       do j = jshl0(ishlt(i)), jshl1(ishlt(i))
           nl = nl + 1
           do k = 1, ishlpri(i)
              nn = nn + 1
              npribas(nn) = nl
              nbaspri(nl) = nn
-             m%icenter(nn) = acent
-             m%itype(nn) = 1
+             m%icenter(nn) = ishlat(i)
+             m%itype(nn) = j
              m%e(nn) = exppri(nm+k)
              do l = 1, m%nmo
-                m%c(l,nn) = ccontr(nm+k) * mocoef((l-1)*nbas+nl)
+                m%c(l,nn) = cpri(nn) * mocoef((l-1)*nbas+nl)
              end do
           end do
-       else if (ishlt(i) == 1) then
-          do j = 2, 4
-             nl = nl + 1
-             do k = 1, ishlpri(i)
-                nn = nn + 1
-                npribas(nn) = nl
-                nbaspri(nl) = nn
-                m%icenter(nn) = acent
-                m%itype(nn) = j
-                m%e(nn) = exppri(nm+k)
-                do l = 1, m%nmo
-                   m%c(l,nn) = ccontr(nm+k) * mocoef((l-1)*nbas+nl)
-                end do
-             end do
-          end do
-       else if (ishlt(i) == 2) then
-          do j = 5, 10
-             nl = nl + 1
-             do k = 1, ishlpri(i)
-                nn = nn + 1
-                npribas(nn) = nl
-                nbaspri(nl) = nn
-                m%icenter(nn) = acent
-                m%itype(nn) = j
-                m%e(nn) = exppri(nm+k)
-                do l = 1, m%nmo
-                   m%c(l,nn) = ccontr(nm+k) * mocoef((l-1)*nbas+nl)
-                end do
-             end do
-          end do
-       else if (ishlt(i) == 3) then
-          do j = 11, 20
-             nl = nl + 1
-             do k = 1, ishlpri(i)
-                nn = nn + 1
-                npribas(nn) = nl
-                nbaspri(nl) = nn
-                m%icenter(nn) = acent
-                m%itype(nn) = j
-                m%e(nn) = exppri(nm+k)
-                do l = 1, m%nmo
-                   m%c(l,nn) = ccontr(nm+k) * mocoef((l-1)*nbas+nl)
-                end do
-             end do
-          end do
-       endif
+       end do
        nm = nm + ishlpri(i)
     end do
 
     deallocate(ishlt,ishlpri,ishlat)
     deallocate(exppri,ccontr)
-    deallocate(mocoef,npribas,nbaspri)
+    deallocate(mocoef,npribas,nbaspri,cpri)
 
     close(luwfn)
 
