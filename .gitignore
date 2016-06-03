@@ -2,3 +2,4 @@
 *.mod 
 *.o
 postg
+postg_dbg
