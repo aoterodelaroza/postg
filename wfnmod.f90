@@ -22,6 +22,9 @@ module wfnmod
   private
   public :: atomin, readwfn, readwfx, readfchk, readtck, readmolden, evalwfn, edisp
 
+  integer, parameter :: dfacm1(0:8) = (/1,1,1,2,3,8,15,48,105/) ! double factorials minus one
+  integer, parameter :: dfac(0:8) = (/1,1,2,3,8,15,48,105,384/) ! double factorials
+
 contains
 
   subroutine atomin(m,mesh,qpro)
@@ -639,14 +642,22 @@ contains
     integer, allocatable :: ishlt(:), ishlpri(:), ishlat(:)
     integer, allocatable :: npribas(:), nbaspri(:)
     real*8, allocatable :: exppri(:), ccontr(:), mocoef(:), cpri(:)
-    integer :: istat, nm, ifac, itypmax, isend
+    integer :: istat, nm, ifac, itypmax, isend, ityp
     logical :: isang
     integer :: nn, nl, nalpha
     logical :: ok, isalpha
 
-    integer, parameter :: jshl0(0:3) = (/1, 2, 5,  11/) ! initial and final types for shell type
+    ! initial and final types for shell type
+    integer, parameter :: jshl0(0:3) = (/1, 2, 5,  11/) ! s, p, d, f
     integer, parameter :: jshl1(0:3) = (/1, 4, 10, 20/) ! s, p, d, f
-    integer, parameter :: dfac(0:8) = (/1,1,1,2,3,8,15,48,105/) ! double factorials minus one
+
+    ! translation between primitive ordering molden -> postg (same as gaussian)
+    !         1   2 3 4    5  6  7  8  9 10    11  12  13  14  15  16  17  18  19  20
+    ! molden: s   x y z   xx yy zz xy xz yz   xxx yyy zzz xyy xxy xxz xzz yzz yyz xyz
+    ! postg:  s   x y z   xx yy zz xy xz yz   xxx yyy zzz xxy xxz yyz xyy xzz yzz xyz
+    !     typtrans(molden) = ipostg
+    integer, parameter :: typtrans(20) = (/&
+       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 17, 14, 15, 18, 19, 16, 20/)
 
     line = ""
     m%name = file
@@ -880,11 +891,11 @@ contains
     do i = 1, ncshel
        if (ishlt(i) > 3) &
           call error('readmolden','can not do shells >3',2)
-
        do j = jshl0(ishlt(i)), jshl1(ishlt(i))
+          ityp = typtrans(j)
           do k = 1, ishlpri(i)
              nn = nn + 1
-             cpri(nn) = ccontr(nm+k) * gnorm(j,exppri(nm+k))
+             cpri(nn) = ccontr(nm+k) * gnorm(ityp,exppri(nm+k))
           end do
        end do
        nm = nm + ishlpri(i)
@@ -896,6 +907,7 @@ contains
     nn = 0
     do i = 1, ncshel
        do j = jshl0(ishlt(i)), jshl1(ishlt(i))
+          ityp = typtrans(j)
           ! normalization constant for the basis function
           norm = 0d0
           do k1 = 1, ishlpri(i)
@@ -903,7 +915,7 @@ contains
                 norm = norm + cpri(nn+k1) * cpri(nn+k2) / (exppri(nm+k1)+exppri(nm+k2))**(ishlt(i)+3d0/2d0)
              end do
           end do
-          cons = pi**(3d0/2d0) * dfac(2*ishlt(i)) / 2**(ishlt(i))
+          cons = pi**(3d0/2d0) * dfacm1(2*ishlt(i)) / 2**(ishlt(i))
           norm = 1d0 / sqrt(norm * cons)
 
           do k = 1, ishlpri(i)
@@ -920,13 +932,14 @@ contains
     nl = 0
     do i = 1, ncshel
        do j = jshl0(ishlt(i)), jshl1(ishlt(i))
+          ityp = typtrans(j)
           nl = nl + 1
           do k = 1, ishlpri(i)
              nn = nn + 1
              npribas(nn) = nl
              nbaspri(nl) = nn
              m%icenter(nn) = ishlat(i)
-             m%itype(nn) = j
+             m%itype(nn) = ityp
              m%e(nn) = exppri(nm+k)
              do l = 1, m%nmo
                 m%c(l,nn) = cpri(nn) * mocoef((l-1)*nbas+nl)
@@ -1239,18 +1252,18 @@ contains
        ! XX,YY,ZZ,XY,XZ,YZ
        N = 2**(11d0/4d0) * a**(7d0/4d0) / pi**(3d0/4d0) / sqrt(3d0)
     else if (type >= 7 .and. type <= 10) then
-       N = 2**(11d0/4d0) * a**(7d0/4d0) / pi**(3d0/4d0)
+       ! N = 2**(11d0/4d0) * a**(7d0/4d0) / pi**(3d0/4d0)
+       N = 2**(11d0/4d0) * a**(7d0/4d0) / pi**(3d0/4d0) / sqrt(3d0)
     else if (type >= 11 .and. type <= 13) then
        !  11  12  13  14  15  16  17  18  19  20
        ! XXX,YYY,ZZZ,XYY,XXY,XXZ,XZZ,YZZ,YYZ,XYZ
        N = 2**(15d0/4d0) * a**(9d0/4d0) / pi**(3d0/4d0) / sqrt(15d0)
-       call error("gnorm","fixme: f primitives",2)
     else if (type >= 14 .and. type <= 19) then
-       N = 2**(15d0/4d0) * a**(9d0/4d0) / pi**(3d0/4d0) / sqrt(3d0)
-       call error("gnorm","fixme: f primitives",2)
+       ! N = 2**(15d0/4d0) * a**(9d0/4d0) / pi**(3d0/4d0) / sqrt(3d0)
+       N = 2**(15d0/4d0) * a**(9d0/4d0) / pi**(3d0/4d0) / sqrt(15d0)
     else if (type == 20) then
-       N = 2**(15d0/4d0) * a**(9d0/4d0) / pi**(3d0/4d0)
-       call error("gnorm","fixme: f primitives",2)
+       ! N = 2**(15d0/4d0) * a**(9d0/4d0) / pi**(3d0/4d0)
+       N = 2**(15d0/4d0) * a**(9d0/4d0) / pi**(3d0/4d0) / sqrt(15d0)
     else
        call error("gnorm","fixme: primitive type not supported",2)
     endif
