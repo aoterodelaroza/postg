@@ -34,8 +34,9 @@ contains
     real*8 :: rr(m%n,m%n), rmid, r, r1, r2, hypr, vp0, vpsum, vpi
     integer :: i, j, k, kk
     real*8, allocatable :: rads(:), wrads(:), xang(:), yang(:), zang(:), wang(:)
-    integer :: nr, nang, ir, il, istat
+    integer :: nr, nang, ir, il, istat, mang, mr
     real*8 :: cutoff(m%n,m%n), x(3)
+    real*8, allocatable :: meshrl(:,:,:), meshx(:,:,:,:)
 
     ! interatomic distances
     rr = 0d0
@@ -54,21 +55,35 @@ contains
     enddo
     allocate(mesh%w(mesh%n),mesh%x(3,mesh%n),stat=istat)
 
-    kk = 0
+    ! allocate work arrays
+    mr = -1
+    mang = -1
     do i = 1, m%n
        if (m%z(i) < 1) cycle
+       mang = max(mang,z2nang(m%z(i)))
+       mr = max(mr,z2nr(m%z(i)))
+    end do
+    allocate(meshrl(mang,mr,m%n),meshx(3,mang,mr,m%n))
+    allocate(rads(mr),wrads(mr),stat=istat)
+    if (istat /= 0) call error('genmesh','could not allocate memory for radial meshes',2)
+    allocate(xang(mang),yang(mang),zang(mang),wang(mang),stat=istat)
+    if (istat /= 0) call error('readwfn','could not allocate memory for angular meshes',2)
+    
+    ! Precompute the mesh weights with multiple threads. The job has to be
+    ! split in two because the nodes have to be positioned in the array in 
+    ! the correct order 
+    !$omp parallel do private(nr,nang,rmid,ir,r,il,x,j,k,r1,r2,hypr,&
+    !$omp cutoff,vp0,vpsum,vpi) firstprivate(rads,wrads,xang,yang,zang,wang)
+    do i = 1, m%n
+       if (m%z(i) < 1) cycle
+
        ! radial mesh
        nr = z2nr(m%z(i))
        nang = z2nang(m%z(i))
-       allocate(rads(nr),wrads(nr),stat=istat)
-       if (istat /= 0) call error('genmesh','could not allocate memory for radial meshes',2)
        rmid = 1d0/real(m%z(i),8)**third
-       CALL RMESH(z2nr(m%z(i)),rmid,rads,wrads)
+       call rmesh(nr,rmid,rads,wrads)
 
        ! angular mesh
-       nang = z2nang(m%z(i))
-       allocate(xang(nang),yang(nang),zang(nang),wang(nang),stat=istat)
-       if (istat /= 0) call error('readwfn','could not allocate memory for angular meshes',2)
 
        if (nang == 6) then
           call ld0006(xang,yang,zang,wang,nang)
@@ -172,12 +187,36 @@ contains
                 enddo
                 vpsum = vpsum + vpi
              enddo
-             kk = kk + 1
-             mesh%w(kk) = vp0/vpsum * wrads(ir) * wang(il)
-             mesh%x(:,kk) = x
+             !$omp critical (mmesh)
+             meshrl(il,ir,i) = vp0/vpsum * wrads(ir) * wang(il)
+             meshx(:,il,ir,i) = x
+             !$omp end critical (mmesh)
           enddo
        enddo
-       deallocate(rads,wrads,xang,yang,zang,wang)
+    end do
+    !$omp end parallel do
+
+    ! clean up
+    if (allocated(rads)) deallocate(rads)
+    if (allocated(wrads)) deallocate(wrads)
+    if (allocated(xang)) deallocate(xang)
+    if (allocated(yang)) deallocate(yang)
+    if (allocated(zang)) deallocate(zang)
+    if (allocated(wang)) deallocate(wang)
+
+    ! fill the 3d mesh
+    kk = 0
+    do i = 1, m%n
+       if (m%z(i) < 1) cycle
+       nr = z2nr(m%z(i))
+       nang = z2nang(m%z(i))
+       do ir = 1, nr
+          do il = 1, nang
+             kk = kk + 1
+             mesh%w(kk) = meshrl(il,ir,i)
+             mesh%x(:,kk) = meshx(:,il,ir,i)
+          enddo
+       enddo
     enddo
 
   end function genmesh
