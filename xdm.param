@@ -1,4 +1,11 @@
-# quantum espresso
+# quantum espresso, new version
+functional      a1   a2 (ang) MAPD nset
+b86bpbe      0.6512  1.4633   11.8  49
+pw86pbe      0.6836  1.5045   11.7  49
+blyp         0.4502  1.6210   14.8  49
+pbe          0.3275  2.7673   14.4  49
+
+# quantum espresso, old version
 functional      a1   a2 (ang) MAPD nset
 pw86pbe      0.2863  2.7707   13.4  49
 b86bpbe,atpw 0.2294  2.8024   12.2  49
@@ -10,13 +17,27 @@ revpbe       0.3454  1.9225   14.9  49     (old)
 pbesol       0.0000  4.1503   18.9  49 (*) (old)
 (*) fixed a1 or a2 parameter in the optimization.
 
+# vasp, using critic2
+functional      a1   a2 (ang) MAPD nset
+b3lyp        0.0371  4.2327   21.1  49
+pbe          0.8863  1.3347   18.7  49
+hse03        0.0853  3.5159   12.6  46
+hse06        0.8885  1.3358   18.8  49
+
 # DFTBA
 functional      a1     a2(ang)  MAPD nset
 default g09   1.1968  -0.2195   18.6  34 # default prm g09
 
+# PM6 (0.0 exchange)
+functional      a1     a2(ang)  MAPD nset
+default g09   0.0000   5.8343   20.0  11 # only stacks
+
 # gaussian basis set, aug-cc-pvtz
 functional      a1     a2(ang)  MAPD nset
+hf            0.3698   2.1961   14.3  49
 pw86pbe       0.7564   1.4545   11.1  65
+pw86lda       0.7266   1.1188   12.6  49
+pw86hahlda    0.2661   2.6661   11.7  49
 b3lyp         0.6356   1.5119    6.4  49
 b3pw91        0.6002   1.4043   13.1  49
 b3p86         1.0400   0.3741   12.4  49
@@ -27,8 +48,15 @@ bhalfandhalf  0.5610   1.9894    9.8  65
 blyp          0.7647   0.8457    9.4  49
 pbe           0.4492   2.5517   14.2  49
 lcwpbe        1.0149   0.6755    7.3  49
+lcwpbe(w=0.2) 0.6897   1.6455    7.6  49
+lcwpbe(w=0.2) 0.3397   2.7057    8.7  65
 tpss          0.6612   1.5111   10.8  49
 b97d (-d)     0.6484   1.1589   12.9  49
+hse06         0.3691   2.8793   11.6  49
+pw86hse       0.7201   1.5033   10.3  49
+olyp          0.6170   0.8653   14.1  49
+bpbe          0.5023   1.3961   20.4  49
+bp86          0.8538   0.6415   16.9  49
 
 # gaussian basis set, aug-cc-pvdz
 functional      a1     a2(ang)  MAPD nset
@@ -51,12 +79,41 @@ b3lyp(tc)     0.4963   1.9437    3.9  40
 
 # gaussian basis set, pc2-erin1
 functional      a1     a2(ang)  MAPD nset
+hf            0.3882   2.1477  13.2  49
 lcwpbe(tc,w4) 0.6416   1.7880   7.8  49
 lcwpbe        0.5922   1.9441   6.5  49
+lcwpbe(w2)    0.3906   2.5603   9.1  49
 b3lyp         0.5166   1.8829   7.9  49
 blyp          0.7065   1.0273  11.7  49
 pbe           0.2280   3.2444  16.8  49
 pbe0          0.1980   3.3552  12.2  49
+pw86pbe       0.5709   2.0560  13.5  49
+bhalfandhalf  0.1797   3.2063   9.3  49
+
+# gaussian basis set, maug-cc-pVTZ
+functional      a1     a2(ang)  MAPD nset
+pbe           0.4880   2.4278  14.6  49
+
+# gaussian basis set, cc-pVTZ(seg.opt.)
+functional      a1     a2(ang)  MAPD nset
+pbe           0.0000   4.1320   26.0  49
+lc-wpbe       0.0000   3.9573   11.9  49
+
+# gaussian basis set, TZV
+functional      a1     a2(ang)  MAPD nset
+pbe           0.0000   4.0583   29.3  49
+
+# gaussian basis set, TZVP
+functional      a1     a2(ang)  MAPD nset
+pbe           0.0000   4.0222   20.9  49
+
+# gaussian basis set, def2-TZVP
+functional      a1     a2(ang)  MAPD nset
+pbe           0.0000   4.0314   19.7  49
+
+# gaussian basis set, 6-311+g(2d,2p)
+functional      a1     a2(ang)  MAPD nset
+b3lyp         0.4376   2.1607    8.1  49
 
 # gaussian basis set, 6-31+G*
 functional      a1     a2(ang)  MAPD nset
@@ -95,3 +152,101 @@ pbe           0.0073   3.9745    9.0  12
 lcwpbe(g09)   0.6611   1.9747    3.3  12
 lcwpbe(tc,w4) 0.5668   2.2866    2.9  12
 
+# gaussian basis set, aug-cc-pVTZ, hybrids sequence
+functional %HF      a1     a2  MAD  MAPD 
+blyp        00  0.7557 0.8734 0.28  9.22 
+blyp        01  0.7004 1.1398 0.23  6.99 
+blyp        02  0.6205 1.4885 0.21  5.70 
+blyp        03  0.5108 1.9379 0.21  5.48 
+blyp        04  0.3825 2.4548 0.25  6.13 
+blyp        05  0.2460 3.0104 0.31  7.52 
+blyp        06  0.1011 3.6060 0.40  9.45 
+blyp        07 -0.0709 4.3069 0.51 11.89 
+blyp        08 -0.2939 5.1940 0.64 14.60 
+blyp        09 -0.6016 6.3837 0.77 17.46 
+blyp        10 -1.0242 7.9897 0.92 20.54 
+pw86        00  0.8674 1.1425 0.39 11.67 
+pw86        01  0.8399 1.2449 0.34 10.06 
+pw86        02  0.8269 1.3121 0.33  9.42 
+pw86        03  0.8251 1.3485 0.33  9.10 
+pw86        04  0.8334 1.3574 0.34  9.01 
+pw86        05  0.8511 1.3427 0.38  9.62 
+pw86        06  0.8742 1.3140 0.42 10.54 
+pw86        07  0.9035 1.2711 0.48 11.66 
+pw86        08  0.9372 1.2193 0.55 12.98 
+pw86        09  0.9744 1.1610 0.63 14.46 
+pw86        10  1.0147 1.0987 0.71 16.00 
+pbe         00  0.4468 2.5618 0.48 14.11 
+pbe         01  0.4172 2.6640 0.43 12.08 
+pbe         02  0.4044 2.7189 0.40 11.03 
+pbe         03  0.4114 2.7162 0.39 10.33 
+pbe         04  0.4420 2.6438 0.39 10.11 
+pbe         05  0.4963 2.5028 0.42 10.30 
+pbe         06  0.5732 2.2949 0.45 10.85 
+pbe         07  0.6703 2.0297 0.50 11.77 
+pbe         08  0.7810 1.7273 0.56 12.94 
+pbe         09  0.8969 1.4131 0.63 14.44 
+pbe         10  1.0148 1.0985 0.71 16.00 
+tpss        00  0.6464 1.5545 0.36 10.67 
+tpss        01  0.5679 1.8427 0.33  9.53 
+tpss        02  0.5113 2.0679 0.31  8.89 
+tpss        03  0.4816 2.2130 0.30  8.35 
+tpss        04  0.4801 2.2745 0.31  8.26 
+tpss        05  0.5072 2.2526 0.33  8.72 
+tpss        06  0.5598 2.1546 0.38  9.49 
+tpss        07  0.6357 1.9903 0.43 10.58 
+tpss        08  0.7313 1.7699 0.50 12.04 
+tpss        09  0.8413 1.5107 0.58 13.67 
+tpss        10  0.9635 1.2214 0.66 15.43 
+
+# gaussian basis set, aug-cc-pVTZ, w sequence for rs-functionals
+functional   w     a1     a2  MAD  MAPD 
+lcwpbe     0.1 0.5569 2.1947 0.42 11.86 
+lcwpbe     0.2 0.6897 1.6454 0.27  7.59 
+lcwpbe     0.3 0.8664 1.0826 0.24  7.14 
+lcwpbe     0.4 1.0303 0.6364 0.25  7.49 
+lcwpbe     0.5 1.1159 0.4522 0.24  7.92 
+lcwpbe     0.6 1.1376 0.4572 0.30  9.38 
+lcwpbe     0.7 1.1264 0.5473 0.39 10.91 
+lcwpbe     0.8 1.1030 0.6585 0.48 12.27 
+lcwpbe     0.9 1.0673 0.7942 0.54 13.29 
+lcwpbe     1.0 1.0228 0.9497 0.59 13.98 
+
+# gaussian basis set, pc-2-spd, hybrids sequence
+functional %HF      a1     a2  MAD  MAPD 
+pbe         00  0.2245 3.2572 0.57 16.73 
+pbe         01  0.2046 3.3232 0.51 14.37 
+pbe         02  0.1862 3.3897 0.47 12.79 
+pbe         03  0.1730 3.4431 0.45 12.00 
+pbe         04  0.1674 3.4761 0.45 11.58 
+pbe         05  0.1714 3.4833 0.46 11.62 
+pbe         06  0.1892 3.4495 0.49 11.92 
+pbe         07  0.2238 3.3675 0.54 12.60 
+pbe         08  0.2787 3.2255 0.59 13.36 
+pbe         09  0.3557 3.0186 0.64 14.43 
+pbe         10  0.4527 2.7539 0.72 15.84 
+blyp        00  0.7039 1.0398 0.35 11.52 
+blyp        01  0.6327 1.3526 0.28  8.80 
+blyp        02  0.5376 1.7486 0.25  7.16 
+blyp        03  0.4207 2.2201 0.26  7.18 
+blyp        04  0.2910 2.7400 0.30  7.99 
+blyp        05  0.1537 3.2963 0.37  9.23 
+blyp        06  0.0082 3.8919 0.45 10.88 
+blyp        07 -0.1587 4.5746 0.56 13.05 
+blyp        08 -0.3642 5.4025 0.68 15.58 
+blyp        09 -0.6287 6.4498 0.81 18.35 
+blyp        10 -0.9763 7.8063 0.96 21.33 
+
+# gaussian basis set, pc-2-spd, w sequence for rs-functionals
+functional   w     a1     a2   MAD  MAPD 
+lcwpbe      0.0 0.2139 3.3557 0.59 16.81
+lcwpbe      0.1 0.2727 3.0786 0.51 14.32 
+lcwpbe      0.2 0.3906 2.5603 0.33  9.13 
+lcwpbe      0.3 0.5036 2.1792 0.25  6.72 
+lcwpbe      0.4 0.5866 1.9676 0.24  6.65 
+lcwpbe      0.5 0.6275 1.9055 0.23  7.01 
+lcwpbe      0.6 0.6392 1.9268 0.27  8.31 
+lcwpbe      0.7 0.6206 2.0272 0.37  9.99 
+lcwpbe      0.8 0.5919 2.1458 0.45 11.43 
+lcwpbe      0.9 0.5525 2.2871 0.51 12.51 
+lcwpbe      1.0 0.5018 2.4580 0.56 13.30 
