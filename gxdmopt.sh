@@ -95,6 +95,7 @@ rm -f fort.7 >& /dev/null
 
 # run postG
 $POSTG $c1 $c2 $2.wfx $chf > $2.outg
+grep 'WARNING -- inconsistent nelec' $2.outg && exit
 
 # energy
 e=$(grep 'total energy' $2.outg | awk '{print $NF}')
