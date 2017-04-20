@@ -113,7 +113,10 @@ pbe           0.0000   4.0314   19.7  49
 
 # gaussian basis set, 6-311+g(2d,2p)
 functional      a1     a2(ang)  MAPD nset
+blyp          0.6988   1.0776   10.8  49
 b3lyp         0.4376   2.1607    8.1  49
+bhahlyp       0.0112   3.7782   10.6  49
+lc-wpbe       0.5313   2.2665    8.1  49
 
 # gaussian basis set, 6-31+G*
 functional      a1     a2(ang)  MAPD nset
