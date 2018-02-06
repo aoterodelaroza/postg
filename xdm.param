@@ -118,17 +118,13 @@ b3lyp         0.4376   2.1607    8.1  49
 bhahlyp       0.0112   3.7782   10.6  49
 lc-wpbe       0.5313   2.2665    8.1  49
 
-# gaussian basis set, 6-31+G*
+# gaussian basis set, 6-311++g**
 functional      a1     a2(ang)  MAPD nset
-pw86pbe       0.6336   1.9148   16.9  49
-b3lyp         0.4515   2.1357   11.4  49
-pbe0          0.0845   3.7940   14.5  49
-camb3lyp      0.2315   3.2123   13.3  49
-b97-1         0.0118   4.1784   16.3  49
-bhalfandhalf  0.1483   3.3435   12.2  49
-blyp          0.5942   1.4555   15.3  49
-pbe           0.2445   3.2596   18.6  49
-lcwpbe        0.8134   1.3736   10.0  49
+pw86pbe       0.4338   2.5715   14.7  49
+
+# gaussian basis set, 6-31++g**
+functional      a1     a2(ang)  MAPD nset
+pw86pbe       0.7554   1.6010   16.9  49
 
 # gaussian basis set, 6-31+G**
 functional      a1     a2(ang)  MAPD nset
@@ -141,6 +137,18 @@ bhalfandhalf  0.1432   3.3705   11.8  49
 blyp          0.5653   1.5460   14.9  49
 pbe           0.2746   3.1857   17.8  49
 lcwpbe        0.8934   1.1466   10.1  49
+
+# gaussian basis set, 6-31+G*
+functional      a1     a2(ang)  MAPD nset
+pw86pbe       0.6336   1.9148   16.9  49
+b3lyp         0.4515   2.1357   11.4  49
+pbe0          0.0845   3.7940   14.5  49
+camb3lyp      0.2315   3.2123   13.3  49
+b97-1         0.0118   4.1784   16.3  49
+bhalfandhalf  0.1483   3.3435   12.2  49
+blyp          0.5942   1.4555   15.3  49
+pbe           0.2445   3.2596   18.6  49
+lcwpbe        0.8134   1.3736   10.0  49
 
 # gaussian basis set, 6-31G* for stacks
 functional      a1    a2 (ang)  MAPD nset
