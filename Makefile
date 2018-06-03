@@ -1,24 +1,24 @@
 ### compiler selection, (un)comment as appropriate
-# The Intel(R) fortran compiler (ifort)
-ifeq ($(DEBUG),1)
-  FC = ifort
-  FCFLAGS = -g -CU -C -traceback -fpe0 -debug -openmp
-  LDFLAGS = -openmp
-else
-  FC = ifort
-  FCFLAGS = -O2 -openmp -static
-  LDFLAGS = -O2 -openmp -static
-endif
-### The GNU fortran compiler (gfortran)
+## The Intel(R) fortran compiler (ifort)
 #ifeq ($(DEBUG),1)
-#  FC = gfortran
-#  FCFLAGS = -O -g -fbounds-check -Wall -Wunused-parameter -ffpe-trap=invalid -fbacktrace -fdump-core -fopenmp
-#  LDFLAGS = -fopenmp
+#  FC = ifort
+#  FCFLAGS = -g -CU -C -traceback -fpe0 -debug -openmp
+#  LDFLAGS = -openmp
 #else
-#  FC = gfortran
-#  FCFLAGS = -O
-#  LDFLAGS = 
+#  FC = ifort
+#  FCFLAGS = -O2 -openmp -static
+#  LDFLAGS = -O2 -openmp -static
 #endif
+### The GNU fortran compiler (gfortran)
+ifeq ($(DEBUG),1)
+  FC = gfortran
+  FCFLAGS = -O -g -fbounds-check -Wall -Wunused-parameter -ffpe-trap=invalid -fbacktrace -fdump-core -fopenmp
+  LDFLAGS = -fopenmp
+else
+  FC = gfortran
+  FCFLAGS = -O
+  LDFLAGS = 
+endif
 ## The PGI fortran compiler (pgf90)
 #ifeq ($(DEBUG),1)
 #  FC = pgfortran
