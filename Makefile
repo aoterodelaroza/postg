@@ -16,8 +16,8 @@ ifeq ($(DEBUG),1)
   LDFLAGS = -fopenmp
 else
   FC = gfortran
-  FCFLAGS = -O
-  LDFLAGS = 
+  FCFLAGS = -O -fopenmp
+  LDFLAGS = -fopenmp
 endif
 ## The PGI fortran compiler (pgf90)
 #ifeq ($(DEBUG),1)
