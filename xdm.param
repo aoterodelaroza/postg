@@ -4,6 +4,10 @@ b86bpbe      0.6512  1.4633   11.8  49
 pw86pbe      0.6836  1.5045   11.7  49
 blyp         0.4502  1.6210   14.8  49
 pbe          0.3275  2.7673   14.4  49
+b3lyp        0.2603  3.1051    9.4  49
+pbe0         0.0000  5.0102   10.9  49 (*)
+hse          0.0000  5.0667   11.3  49 (*)
+(*) fixed a1=0 in the parametrization.
 
 # quantum espresso, old version
 functional      a1   a2 (ang) MAPD nset
@@ -15,7 +19,7 @@ blyp,pslb    0.4615  1.5830   15.2  49
 blyp,atpw    0.2344  2.3118   14.8  49
 revpbe       0.3454  1.9225   14.9  49     (old)
 pbesol       0.0000  4.1503   18.9  49 (*) (old)
-(*) fixed a1 or a2 parameter in the optimization.
+(*) fixed a1=0 in the parametrization.
 
 # vasp, using critic2
 functional      a1   a2 (ang) MAPD nset
