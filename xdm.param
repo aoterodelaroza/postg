@@ -9,6 +9,23 @@ pbe0         0.0000  5.0102   10.9  49 (*)
 hse          0.0000  5.0667   11.3  49 (*)
 (*) fixed a1=0 in the parametrization.
 
+# quantum espresso, new version, hybrids (PAW)
+functional      a1   a2 (ang) MAPD nset
+hse          0.0000  4.9281    9.2  49
+pbe0         0.0000  4.8431    7.6  49
+b3lyp        0.5418  2.1970    8.1  49
+b86bpbe 10%  0.6603  2.2813   10.6  49
+b86bpbe 20%  0.6804  2.2445    9.2  49
+b86bpbe 30%  0.6962  2.2282    8.3  49
+b86bpbe 40%  0.7085  2.2291    7.8  49
+b86bpbe 50%  0.7180  2.2449    7.8  49
+blyp 10%     0.6325  1.8408    9.2  49
+blyp 20%     0.5078  2.3773    8.5  49
+blyp 30%     0.3275  3.1118    8.2  49
+blyp 40%     0.0436  4.2079    8.7  49
+bhahlyp      0.0000  4.5645    9.6  49 (*)
+(*) fixed a1=0 in the parametrization.
+
 # quantum espresso, old version
 functional      a1   a2 (ang) MAPD nset
 pw86pbe      0.2863  2.7707   13.4  49
