@@ -1,9 +1,13 @@
 # quantum espresso, new version
-functional      a1   a2 (ang) MAPD nset
-b86bpbe      0.6512  1.4633   11.8  49
-pw86pbe      0.6836  1.5045   11.7  49
-blyp         0.4502  1.6210   14.8  49
-pbe          0.3275  2.7673   14.4  49
+functional       a1    a2(ang)  MAPD nset
+b86bpbe (PAW)  0.6512  1.4633   11.8  49
+pw86pbe (PAW)  0.6836  1.5045   11.7  49
+blyp    (PAW)  0.4502  1.6210   14.8  49
+pbe     (PAW)  0.3275  2.7673   14.4  49
+b86bpbe (NC)   0.7609  1.1448   12.8  49
+pw86pbe (NC)   0.7659  1.2617   12.9  49
+blyp    (NC)   0.5927  1.1819   12.0  49
+pbe     (NC)   0.4238  2.4841   15.5  49
 
 # quantum espresso, new version, hybrids
 functional           a1    a2(ang)  MAPD nset
