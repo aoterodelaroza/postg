@@ -1006,6 +1006,7 @@ contains
        m%nmo = nint(m%nelec)
     else
        m%nmo = nint(m%nelec) / 2
+       nalpha = nalpha / 2
     end if
        
     ! allocate stuff
