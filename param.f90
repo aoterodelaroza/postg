@@ -20,6 +20,7 @@ module param
 
   ! units
   integer, parameter :: iin = 5
+  integer, parameter :: ierr = 0
   integer, parameter :: iout = 6
   integer, parameter :: ihrsh = 9
   integer, parameter :: luwfn = 10
@@ -141,7 +142,11 @@ contains
     write (iout,100) trim(adjustl(chtype)),trim(adjustl(routine)),&
        trim(adjustl(message))
 
-    if (errortype == 2) stop 1
+    if (errortype == 2) then
+       write (ierr,100) trim(adjustl(chtype)),trim(adjustl(routine)),&
+          trim(adjustl(message))
+       stop 1
+    end if
 
 100 format (A,"(",A,"): ",A)
     
