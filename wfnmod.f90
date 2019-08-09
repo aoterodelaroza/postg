@@ -147,7 +147,7 @@ contains
     type(tmesh), intent(inout) :: mesh
     real*8, intent(out) :: qpro
     
-    character*(mline) :: postg_home, afile
+    character*(mline) :: afile
     real*8 :: rmid, rdum(8), h, q, x(3), r, dq, arho1, arho2, arho, rdata
     integer :: intq
     real*8, allocatable, dimension(:) :: a1, b1, c1, f1
@@ -1006,6 +1006,7 @@ contains
        m%nmo = nint(m%nelec)
     else
        m%nmo = nint(m%nelec) / 2
+       nalpha = nalpha / 2
     end if
        
     ! allocate stuff
