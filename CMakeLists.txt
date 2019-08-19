@@ -38,7 +38,6 @@ include(autocmake_safeguards)
 
 # <<<  Build >>>
 
-set(sources_list copyc6.f dftd3.f)
 set(sources_list atomicdata.f90 meshmod.f90 param.f90 postg.f90 tools_math.f90 wfnmod.f90)
 
 add_executable(postg ${sources_list})
