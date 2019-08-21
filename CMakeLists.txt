@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 project(postg
         VERSION 0.1
@@ -41,6 +41,8 @@ include(autocmake_safeguards)
 set(sources_list atomicdata.f90 meshmod.f90 param.f90 postg.f90 tools_math.f90 wfnmod.f90)
 
 add_executable(postg ${sources_list})
+find_package(OpenMP MODULE COMPONENTS Fortran)
+target_link_libraries(postg OpenMP::OpenMP_Fortran)
 
 # <<<  Install  >>>
 
