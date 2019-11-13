@@ -112,7 +112,7 @@ lcwpbe        0.9045   1.0230    7.4  49
 lcwpbe(tc,w4) 1.0179   0.7193    6.8  40 (no chlorine, sulphur)
 b3lyp(tc)     0.4963   1.9437    3.9  40
 
-# gaussian basis set, pc2-erin1
+# gaussian basis set, pc2-erin1 (aka pc-2-spd)
 functional      a1     a2(ang)  MAPD nset
 hf            0.3882   2.1477  13.2  49
 lcwpbe(tc,w4) 0.6416   1.7880   7.8  49
@@ -124,6 +124,15 @@ pbe           0.2280   3.2444  16.8  49
 pbe0          0.1980   3.3552  12.2  49
 pw86pbe       0.5709   2.0560  13.5  49
 bhalfandhalf  0.1797   3.2063   9.3  49
+
+# gaussian basis set, pcseg-2
+functional      a1     a2(ang)  MAPD nset
+blyp          0.6903   1.0706  11.8  49
+pbe           0.2938   3.0338  16.4  49
+b3lyp         0.5166   1.8770   8.1  49
+pbe0          0.3171   2.9813  11.9  49
+camb3lyp      0.2394   3.1320  10.4  49
+lcwpbe        0.7195   1.5599   6.9  49
 
 # gaussian basis set, maug-cc-pVTZ
 functional      a1     a2(ang)  MAPD nset
