@@ -3,3 +3,6 @@
 *.o
 postg
 postg_dbg
+
+# cmake
+build/
