@@ -151,6 +151,10 @@ pbe           0.0000   4.0583   29.3  49
 functional      a1     a2(ang)  MAPD nset
 pbe           0.0000   4.0222   20.9  49
 
+# gaussian basis set, def2tzvpp
+functional      a1     a2(ang)  MAPD nset
+b3lyp         0.4089   2.2404    9.7  49
+
 # gaussian basis set, def2-TZVP
 functional      a1     a2(ang)  MAPD nset
 pbe           0.0000   4.0314   19.7  49
