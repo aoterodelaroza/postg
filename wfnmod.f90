@@ -840,11 +840,13 @@ contains
 
   end function readfchk
 
-  !> Read a molden file. Different programs write molden files in different ways. 
-  !> Right now, this routine has only been tested with psi4 (only versions starting 
-  !> June 2016; previous versions of psi4 wrote molden files differently).
-  !> Also, psi4 writes restricted open wavefunctions the same as unrestricted
-  !> wavefunctions, so that is not tested either, and probably won't work.
+  !> Read a molden file. Different programs write molden files in
+  !> different ways.  Right now, this routine has only been tested
+  !> with psi4 (only versions starting June 2016; previous versions of
+  !> psi4 wrote molden files differently) and orca (4.0.2).  Also,
+  !> psi4 writes restricted open wavefunctions the same as
+  !> unrestricted wavefunctions, so that is not tested either, and
+  !> probably won't work.
   function readmolden(file,egauss) result(m)
 
     character*(mline), intent(in) :: file
@@ -859,8 +861,11 @@ contains
     real*8, allocatable :: exppri(:), ccontr(:), motemp(:), cpri(:), mocoef(:,:), cnorm(:)
     integer :: istat, nm, ityp, lnmoa, lnmob, lnmo
     logical :: isang, is5d, is7f, is9g
-    integer :: nn, nl, nalpha, nsph, ncar, nc, ns
+    integer :: nn, nl, nalpha, nsph, ncar, nc, ns, imoldentype
     logical :: ok, isalpha
+
+    integer, parameter :: mt_psi4 = 1
+    integer, parameter :: mt_orca = 2
 
     ! guide to the variables in this routine:
     !   ncshel = number of contraction shells (# of blocks in [GTO])
@@ -914,12 +919,18 @@ contains
     is5d = .false.
     is7f = .false.
     is9g = .false.
+    imoldentype = mt_psi4
 
     ! parse the molden file, first pass -> read dimensions prior to allocation
     open(luwfn,file=file,status='old')
 
     do while(next_keyword())
-       if (trim(lower(keyword)) == "atoms") then
+       if (trim(keyword) == "title") then
+          read(luwfn,'(A)',end=40) line
+          if (index(line,"created by orca_2mkl") > 0) then
+             imoldentype = mt_orca
+          end if
+       else if (trim(lower(keyword)) == "atoms") then
           ! read the number of atoms 
           m%n = 0
           read(luwfn,'(A)',end=40) line
@@ -1036,11 +1047,10 @@ contains
 
     ! geometry header -> detect the units for the geometry
     read(luwfn,'(A)',end=40) line
-    read(line,*) word1, word2
-    do while(.not.trim(lower(word1)) == "[atoms]")
+    do while(index(lower(line),"[atoms]") == 0)
        read(luwfn,'(A)',end=40) line
-       read(line,*) word1, word2
     end do
+    read(line,*) word1, word2
     isang = (trim(lower(word2)) == "(angs)".or.trim(lower(word2)) == "(ang)") 
 
     ! read the atomic numbers and positions
@@ -1191,6 +1201,25 @@ contains
           call error('readmolden','inconsistent number of MOs (total) in the second pass',2)
     endif
 
+    ! If this is an orca molden file, flip the sign of the MO coefficients in these cases:
+    ! - abs(m)=3 for the f shells
+    ! - abs(m)>=3 for the g shells
+    if (imoldentype == mt_orca) then
+       do j = 1, ncshel
+          nsph = nshlt(ishlt(j))
+          if (ishlt(j) == -3) then
+             do i = 1, m%nmo
+                motemp((i-1)*nbassph+ns+6:(i-1)*nbassph+ns+7) = -motemp((i-1)*nbassph+ns+6:(i-1)*nbassph+ns+7)
+             end do
+          else if (ishlt(j) == -3) then
+             do i = 1, m%nmo
+                motemp((i-1)*nbassph+ns+6:(i-1)*nbassph+ns+9) = -motemp((i-1)*nbassph+ns+6:(i-1)*nbassph+ns+9)
+             end do
+          end if
+          ns = ns + nsph
+       end do
+    end if
+
     ! convert spherical basis functions to Cartesian and build the mocoef
     ! deallocate the temporary motemp
     allocate(mocoef(m%nmo,nbascar))
@@ -1247,6 +1276,9 @@ contains
           ! primitive coefficients normalized
           do k = 1, ishlpri(i)
              cnorm(k) = ccontr(nm+k) * gnorm(ityp,exppri(nm+k)) 
+             if (imoldentype == mt_orca) then
+                cnorm(k) = cnorm(k) / gnorm_orca(ityp,exppri(nm+k))
+             end if
           end do
 
           ! normalization constant for the basis function
@@ -1313,7 +1345,7 @@ contains
       next_keyword =.true.
       istart = index(lower(line),"[") + 1
       iend = index(lower(line),"]") - 1
-      keyword = line(istart:iend)
+      keyword = lower(line(istart:iend))
       return
 40    continue
       return
@@ -1628,6 +1660,31 @@ contains
     endif
 
   endfunction gnorm
+
+  !> Calculate the normalization factor of a primitive of a given
+  !> angular momentum l with exponent a, orca convention. This is used
+  !> to "de-normalize" the orca primitive coefficients.
+  function gnorm_orca(type,a) result(N)
+    use param, only: pi
+    integer, intent(in) :: type
+    real*8, intent(in) :: a
+    real*8 :: N
+
+    if (type == 1) then
+       N = 2**(3d0/4d0) * a**(3d0/4d0) / pi**(3d0/4d0)
+    else if (type >= 2 .and. type <= 4) then
+       N = 2**(7d0/4d0) * a**(5d0/4d0) / pi**(3d0/4d0)
+    else if (type >= 5 .and. type <= 10) then
+       N = 2**(11d0/4d0) * a**(7d0/4d0) / pi**(3d0/4d0) / sqrt(3d0)
+    else if (type >= 11 .and. type <= 20) then
+       N = 2**(11d0/4d0) * a**(7d0/4d0) / pi**(3d0/4d0) / sqrt(15d0)
+    else if (type >= 21 .and. type <= 35) then
+       N = 2**(19d0/4d0) * a**(11d0/4d0) / pi**(3d0/4d0) / sqrt(35d0)
+    else
+       call error("gnorm","fixme: primitive type not supported",2)
+    endif
+
+  endfunction gnorm_orca
 
   subroutine evalwfn(m,mesh)
     use param
