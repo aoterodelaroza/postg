@@ -930,7 +930,7 @@ contains
           if (index(line,"created by orca_2mkl") > 0) then
              imoldentype = mt_orca
           end if
-       else if (trim(lower(keyword)) == "atoms") then
+       else if (trim(keyword) == "atoms") then
           ! read the number of atoms 
           m%n = 0
           read(luwfn,'(A)',end=40) line
@@ -938,7 +938,7 @@ contains
              m%n = m%n + 1
              read(luwfn,'(A)',end=40) line
           end do
-       elseif (trim(lower(keyword)) == "gto") then
+       elseif (trim(keyword) == "gto") then
           ! read the number of shells and primitives
           ncshel = 0
           nshel = 0
@@ -955,7 +955,7 @@ contains
                 read(luwfn,'(A)',end=40) line
              end do
           end do
-       elseif (trim(lower(keyword)) == "mo") then
+       elseif (trim(keyword) == "mo") then
           ! read the number of MOs, number of electrons, and number of alpha electrons
           m%nelec = 0
           nalpha = 0
@@ -991,19 +991,19 @@ contains
              end if
           end do
 30        continue
-       elseif (trim(lower(keyword)) == "5d" .or. trim(lower(keyword)) == "5d7f") then
+       elseif (trim(keyword) == "5d" .or. trim(keyword) == "5d7f") then
           is5d = .true.
           is7f = .true.
           read(luwfn,'(A)',end=40) line
-       elseif (trim(lower(keyword)) == "5d10f") then
+       elseif (trim(keyword) == "5d10f") then
           is5d = .true.
           is7f = .false.
           read(luwfn,'(A)',end=40) line
-       elseif (trim(lower(keyword)) == "7f") then
+       elseif (trim(keyword) == "7f") then
           is5d = .false.
           is7f = .true.
           read(luwfn,'(A)',end=40) line
-       elseif (trim(lower(keyword)) == "9g") then
+       elseif (trim(keyword) == "9g") then
           is9g = .true.
           read(luwfn,'(A)',end=40) line
        else
@@ -1011,6 +1011,11 @@ contains
           read(luwfn,'(A)',end=40) line
        end if
     end do
+    if (imoldentype == mt_orca) then
+       is5d = .true.
+       is7f = .true.
+       is9g = .true.
+    end if
 
     ! type of wavefunction -> number of MOs
     if (m%wfntyp == 1) then
