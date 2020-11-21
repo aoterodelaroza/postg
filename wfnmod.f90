@@ -2175,10 +2175,12 @@ contains
    read(lu,'(A)',end=999) line
    do while(.true.)
       if (.not.isinteger(idum,line,lp)) then
+         line = adjustl(line(lp:))
+         if (line(1:1) == "<") exit
          lp = 1
          read(lu,'(A)',end=999) line
          line = adjustl(line)
-         if (line(1:2) == "</") exit
+         if (line(1:1) == "<") exit
       else
          kk = kk + 1
          if (kk > n) call error("read_integers","exceeded size of the array",2)
@@ -2204,6 +2206,8 @@ contains
    read(lu,'(A)',end=999) line
    do while(.true.)
       if (.not.isreal(rdum,line,lp)) then
+         line = adjustl(line(lp:))
+         if (line(1:1) == "<") exit
          lp = 1
          read(lu,'(A)',end=999) line
          line = adjustl(line)
