@@ -966,8 +966,9 @@ contains
              if (index(lower(line),"ene=") /= 0) then
                 ! spin
                 read(luwfn,'(A)',end=30) line
-                read (line,*) word1, word2
-                isalpha = (trim(lower(word2)) == "alpha")
+                if (index(lower(line),"spin=") /= 0) then
+                   isalpha = (index(lower(line),"alpha") > 0)
+                end if
 
                 ! occupation
                 read(luwfn,'(A)',end=30) line
@@ -1165,8 +1166,7 @@ contains
 
        ! is this an alpha electron?
        if (index(lower(line),"spin=") /= 0 .and. m%wfntyp > 0) then
-          read (line,*) word1, word2
-          isalpha = (trim(lower(word2)) == "alpha") 
+          isalpha = (index(lower(line),"alpha") > 0)
        end if
 
        ! is this orbital occupied?
