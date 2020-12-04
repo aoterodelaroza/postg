@@ -48,3 +48,11 @@ target_link_libraries(postg OpenMP::OpenMP_Fortran)
 
 install(TARGETS postg
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+# <<< Tests >>>
+find_package(NUMDIFF)
+option(BUILD_TESTING "Enable the regression tests for the critic2 build." OFF)
+if (BUILD_TESTING AND NUMDIFF_FOUND)
+  include(CTest)
+  add_subdirectory(tests)
+endif()

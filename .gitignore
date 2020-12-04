@@ -6,3 +6,7 @@ postg_dbg
 
 # cmake
 build/
+
+# tests (source tree)
+tests/zz_source.tar.xz
+tests/zz_source/
