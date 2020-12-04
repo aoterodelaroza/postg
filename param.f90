@@ -25,6 +25,7 @@ module param
   integer, parameter :: ihrsh = 9
   integer, parameter :: luwfn = 10
   integer, parameter :: imosa = 11
+  integer, parameter :: luvfree = 12
 
   ! constants
   real*8, parameter :: pi = 3.141592653589793d0
@@ -114,6 +115,10 @@ module param
   integer, parameter :: chf_lcwpbe = -7
   integer, parameter :: chf_pw86 = -8
   integer, parameter :: chf_b971 = -9
+  integer, parameter :: chf_fromfile = -100
+
+  ! free volumes from file
+  real*8 :: frevolff(0:103)
 
   ! overloaded functions
   interface realloc
@@ -191,7 +196,6 @@ contains
   endfunction z2nang
 
   function frevol(z)
-
     integer, intent(in) :: z
     real*8 :: frevol
 
@@ -334,6 +338,12 @@ contains
        19.366722293791256d0, 18.604506038051770d0, 17.967854713848929d0, 17.427825507512161d0, 16.962774503019283d0,&
        16.015015785319534d0, 15.403636840460491d0, 14.886731288556328d0, 14.443878154969715d0, 14.059464430879629d0/
 
+    ! from file
+    if (chf == chf_fromfile) then
+       frevol = frevolff(z)
+       return
+    end if
+
     ! pure GGA
     if (abs(chf) < 1d-10) then
        if (z > 10) then
@@ -414,7 +424,67 @@ contains
 
   endfunction frevol
 
- !> Convert string to lowercase except where quoted
+  subroutine frevol_read_file(name)
+    character*(*), intent(in) :: name !< Input string, same as the function result on output
+
+    integer :: i, ios, idum
+    real*8 :: rdum
+    logical :: ok
+
+    ! use DKH LSDA/UGBS free atomic volumes as default 
+    frevolff = (/&
+       0.d0,&
+       9.194D0,   4.481D0,  91.957D0,  61.357D0,  49.813D0,  36.728D0,&
+       27.633D0,  23.517D0,  19.322D0,  15.950D0, 109.359D0, 103.064D0,&
+       120.419D0, 104.229D0,  86.782D0,  77.133D0,  66.372D0,  57.336D0,&
+       203.093D0, 212.202D0, 183.101D0, 162.278D0, 143.250D0, 108.209D0,&
+       123.098D0, 105.735D0,  92.944D0,  83.794D0,  75.750D0,  81.177D0,&
+       118.371D0, 116.334D0, 107.474D0, 103.221D0,  95.111D0,  87.605D0,&
+       248.772D0, 273.748D0, 249.211D0, 223.801D0, 175.809D0, 156.831D0,&
+       160.042D0, 136.654D0, 127.754D0,  97.024D0, 112.778D0, 121.627D0,&
+       167.906D0, 172.030D0, 165.500D0, 163.038D0, 153.972D0, 146.069D0,&
+       341.992D0, 385.767D0, 343.377D0, 350.338D0, 334.905D0, 322.164D0,&
+       310.337D0, 299.537D0, 289.567D0, 216.147D0, 268.910D0, 259.838D0,&
+       251.293D0, 243.174D0, 235.453D0, 228.284D0, 229.617D0, 209.971D0,&
+       197.541D0, 183.236D0, 174.685D0, 164.139D0, 150.441D0, 135.765D0,&
+       125.297D0, 131.258D0, 185.769D0, 195.671D0, 193.036D0, 189.142D0,&
+       185.919D0, 181.089D0, 357.787D0, 407.283D0, 383.053D0, 362.099D0,&
+       346.565D0, 332.462D0, 319.591D0, 308.095D0, 297.358D0, 300.572D0,&
+       275.792D0, 266.317D0, 257.429D0, 209.687D0, 203.250D0, 230.248D0,&
+       236.878D0/)
+
+    ! check the file
+    inquire(file=name,exist=ok)
+    if (.not.ok) then
+       write (iout,'("vfree file not found or unknown vfree token: ",A)') trim(name)
+       stop 1
+    endif
+    
+    ! 
+    open(luvfree,file=name,status='old')
+    do while (.true.)
+       read(luvfree,*,err=999,iostat=ios) idum, rdum
+       if (is_iostat_end(ios)) exit
+       if (idum < 0 .or. idum > 103) then
+          write (iout,'("atomic number out of range in free volume file")')
+          stop 1
+       end if
+       if (rdum <= 0) then
+          write (iout,'("non-positive free volume in free volume file")')
+          stop 1
+       end if
+       frevolff(idum) = rdum
+    end do
+    close(luvfree)
+    return
+
+999 continue
+    write (iout,'("error reading vfree file: ",A)') trim(name)
+    stop 1
+
+  end subroutine frevol_read_file
+
+  !> Convert string to lowercase except where quoted
   !> string and lower will return the same
   function lower (string)
     

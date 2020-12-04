@@ -105,7 +105,8 @@ program postg
            chf = 1.0d0
            write(iout,'("a_hf        hf")')
         else
-           call error("postg","unknown functional",2)
+           chf = chf_fromfile
+           call frevol_read_file(hfword)
         endif
      else
         write(iout,'("a_hf        ",f12.6)') chf
@@ -222,6 +223,8 @@ program postg
   write (iout,'("         blyp,b3lyp,bhah,bhahlyp,bhandh,bhahlyp,bhandhlyp,camb3lyp,cam-b3lyp, ")')
   write (iout,'("         pbe,pbe0,lcwpbe,lc-wpbe,pw86,pw86pbe,b971,b97-1, or a number between 0.0 ")')
   write (iout,'("         and 1.0 representing the fraction of exact exchange. Default: 0.0.")')
+  write (iout,'("         Alternatively, a_hf can also be a text file with rows Z vfree(Z), where Z")')
+  write (iout,'("         is the atomic number and vfree(Z) is the free volume for that atom.")')
   write (iout,*)
   write (iout,'("  optional = an optional keyword. One of: ")')
   write (iout,'("    c9: calculate the C9 dispersion coefficients (no contribution to the energy).")')
