@@ -201,6 +201,13 @@ program postg
   enddo
   write (iout,'("#")')
 
+  write (iout,'("atomic polarizabilities (bohr^3)")')
+  write (iout,'("# i At        alpha")')
+  do i = 1, mol%n
+     write (iout,'(I3,X,A2,X,1p,5(E18.10,X))') i, ptable(mol%z(i)), mol%v(i) * frepol(mol%z(i)) / frevol(mol%z(i))
+  enddo
+  write (iout,'("#")')
+
   write (iout,'("hirshfeld charges ")')
   write (iout,'("# i At        Charge")')
   do i = 1, mol%n

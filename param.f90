@@ -34,7 +34,7 @@ module param
   real*8, parameter :: third2 = 2d0/3d0
   real*8, parameter :: small = 1d-10
   integer, parameter :: mline = 1024
-  
+
   ! chars
   character*(1), parameter :: blank = " " !< blank
   character*(1), parameter :: null = char(0) !< null character (ascii 0)
@@ -54,7 +54,7 @@ module param
      'Tl','Pb','Bi','Po','At','Rn','Fr','Ra','Ac','Th',&
      'Pa','U ','Np','Pu','Am','Cm','Bk','Cf','Es','Fm',&
      'Md','No','Lr'/)
-  
+
   ! Free Atomic Polarizabilities from
   ! CRC Handbook of Chemistry and Physics, 88th Ed.
   ! untis are AA^3, then transformed to au (0.529...)^3.
@@ -105,7 +105,7 @@ module param
   end type molecule
 
   ! % of HF
-  real*8 :: chf 
+  real*8 :: chf
   integer, parameter :: chf_blyp = -1
   integer, parameter :: chf_b3lyp = -2
   integer, parameter :: chf_bhahlyp = -3
@@ -132,7 +132,7 @@ contains
     character*(*), intent(in) :: routine !< routine calling the error
     character*(*), intent(in) :: message !< the message
     integer, intent(in) :: errortype !< fatal, warning or info
-    
+
     character*(20)      chtype
 
     if (errortype == 2) then
@@ -154,7 +154,7 @@ contains
     end if
 
 100 format (A,"(",A,"): ",A)
-    
+
   end subroutine error
 
   function elem2z(s) result(z)
@@ -162,7 +162,7 @@ contains
     integer :: z
 
     integer :: i
-    
+
     z = -1
     do i = 0, 103
        if (s == ptable(i)) then
@@ -357,23 +357,23 @@ contains
     ! special cases
     if (chf < 0d0 .and. (z<19.or.z>20.and.z<37)) then ! up to Kr except K and Ca
        select case(nint(chf))
-       case(chf_blyp) 
+       case(chf_blyp)
           frevol = frevol_blyp(z)
-       case(chf_b3lyp) 
+       case(chf_b3lyp)
           frevol = frevol_b3lyp(z)
-       case(chf_bhahlyp) 
+       case(chf_bhahlyp)
           frevol = frevol_bhahlyp(z)
-       case(chf_camb3lyp) 
+       case(chf_camb3lyp)
           frevol = frevol_camb3lyp(z)
-       case(chf_pbe) 
+       case(chf_pbe)
           frevol = frevol_pbe(z)
-       case(chf_pbe0) 
+       case(chf_pbe0)
           frevol = frevol_pbe0(z)
-       case(chf_lcwpbe) 
+       case(chf_lcwpbe)
           frevol = frevol_lcwpbe(z)
-       case(chf_pw86) 
+       case(chf_pw86)
           frevol = frevol_pw86(z)
-       case(chf_b971) 
+       case(chf_b971)
           frevol = frevol_b971(z)
        case default
           call error("frevol","unknown functional",2)
@@ -382,23 +382,23 @@ contains
        ! general hybrid
        if (chf < 0d0) then
           select case(nint(chf))
-          case(chf_blyp) 
+          case(chf_blyp)
              rchf = 0d0
-          case(chf_b3lyp) 
+          case(chf_b3lyp)
              rchf = 0.2d0
-          case(chf_bhahlyp) 
+          case(chf_bhahlyp)
              rchf = 0.5d0
-          case(chf_camb3lyp) 
+          case(chf_camb3lyp)
              rchf = 0.2d0
-          case(chf_pbe) 
+          case(chf_pbe)
              rchf = 0.0d0
-          case(chf_pbe0) 
+          case(chf_pbe0)
              rchf = 0.25d0
-          case(chf_lcwpbe) 
+          case(chf_lcwpbe)
              rchf = 0.25d0
-          case(chf_pw86) 
+          case(chf_pw86)
              rchf = 0.0d0
-          case(chf_b971) 
+          case(chf_b971)
              rchf = 0.21d0
           case default
              call error("frevol","unknown functional",2)
@@ -431,7 +431,7 @@ contains
     real*8 :: rdum
     logical :: ok
 
-    ! use DKH LSDA/UGBS free atomic volumes as default 
+    ! use DKH LSDA/UGBS free atomic volumes as default
     frevolff = (/&
        0.d0,&
        9.194D0,   4.481D0,  91.957D0,  61.357D0,  49.813D0,  36.728D0,&
@@ -459,8 +459,8 @@ contains
        write (iout,'("vfree file not found or unknown vfree token: ",A)') trim(name)
        stop 1
     endif
-    
-    ! 
+
+    !
     open(luvfree,file=name,status='old')
     do while (.true.)
        read(luvfree,*,err=999,iostat=ios) idum, rdum
@@ -487,7 +487,7 @@ contains
   !> Convert string to lowercase except where quoted
   !> string and lower will return the same
   function lower (string)
-    
+
     character*(*), intent(in) :: string !< Input string, same as the function result on output
     character*(len(string)) :: lower
 
@@ -507,7 +507,7 @@ contains
   !> Get integer value from input text. If a valid integer is not
   !> found, then return .false.
   logical function isinteger (ival,line,lp)
-    
+
     character*(mline), intent(in) :: line !< Input string
     integer, intent(inout) :: lp !< Pointer to current position on string
     integer, intent(out) :: ival !< Integer value read, same as function result
@@ -521,7 +521,7 @@ contains
     enddo
     i=lp
     if (line(i:i) .eq. '+' .or. line(i:i) .eq. '-') i=i+1
-    if (isdigit(line(i:i))) then 
+    if (isdigit(line(i:i))) then
        do while (isdigit(line(i:i)))
           i=i+1
        enddo
@@ -542,7 +542,7 @@ contains
   !> Get a real number from line and sets rval to it.
   !> If a valid real number is not found, isreal returns .false.
   logical function isreal (rval, line, lp)
-    
+
     character*(*), intent(in) :: line !< Input string
     integer, intent(inout) :: lp !< Pointer to current position on string
     real*8, intent(out) :: rval !< Real value read
@@ -559,21 +559,21 @@ contains
     end do
 
     i = lp
-    if (line(i:i) .eq. '+' .or. line(i:i) .eq. '-') i = i + 1 
-    if (isdigit(line(i:i))) then 
+    if (line(i:i) .eq. '+' .or. line(i:i) .eq. '-') i = i + 1
+    if (isdigit(line(i:i))) then
        do while (isdigit(line(i:i)))
           i = i + 1
        enddo
-       if (line(i:i) .eq. '.') then 
+       if (line(i:i) .eq. '.') then
           i = i + 1
           do while (isdigit(line(i:i)))
              i = i + 1
           enddo
        endif
        matched = .true.
-    else if (line(i:i) .eq. '.') then 
+    else if (line(i:i) .eq. '.') then
        i = i + 1
-       if (isdigit(line(i:i))) then 
+       if (isdigit(line(i:i))) then
           do while (isdigit(line(i:i)))
              i = i + 1
           enddo
@@ -587,12 +587,12 @@ contains
 
     !.....get optional exponent
     tp = i - 1
-    if (matched) then 
+    if (matched) then
        if (line(i:i)=='e' .or. line(i:i)=='E' .or. line(i:i)=='d' .or. line(i:i)=='D'.or.&
-           line(i:i)=='-' .or. line(i:i)=='+') then 
+           line(i:i)=='-' .or. line(i:i)=='+') then
           i = i + 1
-          if (line(i:i) .eq. '+' .or. line(i:i) .eq. '-') i = i + 1 
-          if (isdigit (line(i:i))) then 
+          if (line(i:i) .eq. '+' .or. line(i:i) .eq. '-') i = i + 1
+          if (isdigit (line(i:i))) then
              do while (isdigit(line(i:i)))
                 i = i + 1
              enddo
@@ -604,7 +604,7 @@ contains
                 matched = .false.
                 rval = 0d0
              endif
-          else 
+          else
              matched = .false.
           endif
        else
@@ -628,7 +628,7 @@ contains
 
   !> Convert ascii string to integer (private).
   integer function atoi (string)
-    
+
     character*(*), intent(in) :: string !< Input string
 
     integer           i, sign
@@ -639,7 +639,7 @@ contains
        i=i+1
     end do
     sign=1
-    if(string(i:i) .eq. '+' .or. string(i:i) .eq. '-') then 
+    if(string(i:i) .eq. '+' .or. string(i:i) .eq. '-') then
        if (string(i:i) .eq. '-') sign=-1
        i=i+1
     endif
@@ -657,7 +657,7 @@ contains
 
   !> Return true if c is a digit (private).
   logical function isdigit (c)
-    
+
     character*(1), intent(in) :: c !< Is the character c a digit?
 
     isdigit = c.ge.'0' .and. c.le.'9'
@@ -681,9 +681,9 @@ contains
     esign=1
     i=1
     do while (str(i:i) .eq. blank)
-       i=i+1 
+       i=i+1
     end do
-    if (str (i:i) .eq. '+' .or. str(i:i) .eq.'-') then 
+    if (str (i:i) .eq. '+' .or. str(i:i) .eq.'-') then
        if (str(i:i) .eq. '-') sign=-1
        i=i+1
     endif
@@ -691,7 +691,7 @@ contains
        val=ten*val+ichar(str(i:i))-ichar('0')
        i=i+1
     enddo
-    if (str(i:i) .eq. '.') then 
+    if (str(i:i) .eq. '.') then
        i=i+1
        do while (isdigit(str(i:i)))
           val=ten*val+ichar(str(i:i))-ichar('0')
@@ -701,7 +701,7 @@ contains
     endif
     if (str(i:i).eq.'e' .or. str(i:i).eq.'E' .or. str(i:i).eq.'d' .or. str(i:i).eq.'D') then
        i=i+1
-       if (str (i:i) .eq. '+' .or. str(i:i) .eq.'-') then 
+       if (str (i:i) .eq. '+' .or. str(i:i) .eq.'-') then
           if (str(i:i) .eq. '-') esign=-1
           i=i+1
        endif
@@ -712,7 +712,7 @@ contains
     elseif (str(i:i).eq.'-' .or. str(i:i).eq.'+') then
        esign = 1
        if (str(i:i) .eq. '-') esign=-1
-       i = i + 1 
+       i = i + 1
        do while (isdigit(str(i:i)))
           exponent=10*exponent+ichar(str(i:i))-ichar('0')
           i=i+1
@@ -728,15 +728,15 @@ contains
 
     real*8, intent(inout), allocatable :: a(:) !< Input array, real*8, 1D
     integer, intent(in) :: nnew !< new dimension
-    
+
     real*8, allocatable :: temp(:)
     integer :: nold
-    
+
     if (.not.allocated(a)) &
        call error('realloc1r','array not allocated',2)
     nold = size(a)
     allocate(temp(nnew))
-    
+
     temp(1:min(nnew,nold)) = a(1:min(nnew,nold))
     call move_alloc(temp,a)
 
@@ -747,16 +747,16 @@ contains
 
     real*8, intent(inout), allocatable :: a(:,:) !< Input array, real*8, 2D
     integer, intent(in) :: n1, n2 !< new dimension
-    
+
     real*8, allocatable :: temp(:,:)
     integer :: nold(2)
-    
+
     if (.not.allocated(a)) &
        call error('realloc2r','array not allocated',2)
     nold(1) = size(a,1)
     nold(2) = size(a,2)
     allocate(temp(n1,n2))
-    
+
     temp = 0d0
     temp(1:min(n1,nold(1)),1:min(n2,nold(2))) = a(1:min(n1,nold(1)),1:min(n2,nold(2)))
     call move_alloc(temp,a)
@@ -768,15 +768,15 @@ contains
 
     integer, intent(inout), allocatable :: a(:) !< Input array, integer, 1D
     integer, intent(in) :: nnew !< New dimension
-    
+
     integer, allocatable :: temp(:)
     integer :: nold
-    
+
     if (.not.allocated(a)) &
        call error('realloc1i','array not allocated',2)
     nold = size(a)
     allocate(temp(nnew))
-    
+
     temp(1:min(nnew,nold)) = a(1:min(nnew,nold))
     call move_alloc(temp,a)
 
