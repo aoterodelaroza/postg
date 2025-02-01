@@ -16,7 +16,8 @@ To use postg, you will need the parameters for the damping function,
 which depend on the exchange-correlation functional you are using and
 also on the basis set (if it is far from complete). A list of
 parameters is shipped with the postg distribution (a file called
-xdm.param) and can also be found online at http://schooner.chem.dal.ca .
+xdm.param). This data can also be found online at 
+https://erin-r-johnson.github.io/software/ .
 
 Compilation
 -----------
@@ -65,15 +66,28 @@ section) by applying the formchk utility program to it. Many programs
 (including psi4, gaussian, and gamess) generate molden-style
 wavefunction files (extension .molden).
 
-If, for instance, your wavefunction file is calc.wfn, then
+If, for instance, your wavefunction file is calc.wfn, then either
 
     postg 0.754 1.102 calc.wfn lcwpbe
+    postg BJ 0.754 1.102 calc.wfn lcwpbe
 
-calculates the dispersion energy using damping parameters $a1=0.754$,
-$a2=1.102$ Å and the atomic volumes corresponding to the LC-wPBE
-functional. Damping function parameters for common functionals and
-basis sets can be found in http://schooner.chem.dal.ca. The functional
-keyword can be one of:
+will calculate the XDM(BJ) dispersion energy using BJ-damping parameters 
+$a1=0.754$, $a2=1.102$ Å and the atomic volumes corresponding to the 
+LC-wPBE functional. 
+
+To use XDM(Z), which uses the new (2025) one-parameter damping function 
+based on atomic numbers, then either
+
+    postg 138857 calc.wfn lcwpbe
+    postg Z 138857 calc.wfn lcwpbe
+
+will calculate the XDM(Z) dispersion energy using the Z-damping parameter
+$z_damp=138857$ and the atomic volumes corresponding to the LC-wPBE 
+functional.
+
+Damping function parameters for common functionals and
+basis sets can be found in https://erin-r-johnson.github.io/software/ .
+The functional keyword can be one of:
 
 * blyp
 * b3lyp
@@ -199,8 +213,9 @@ And XDM applied to solid-state calculations:
 Copyright notice
 ----------------
 
-Copyright (c) 2013-2015 Alberto Otero de la Roza, Felix Kannemann,
-Erin R. Johnson, Ross M. Dickson, Hartmut Schmider, and Axel D. Becke.
+Copyright (c) 2013-2025 Alberto Otero de la Roza, Felix Kannemann, 
+Erin R. Johnson, Ross M. Dickson, Hartmut Schmider, 
+Kyle R. Bryenton, and Axel D. Becke.
 
 postg is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
