@@ -9,11 +9,12 @@
 ! (XDM) model dispersion coefficients and energy using gaussian-style
 ! wfn and wfx files.
 !
-! Copyright (c) 2013-2016 Alberto Otero de la Roza
+! Copyright (c) 2013-2025 Alberto Otero de la Roza
 ! <aoterodelaroza@gmail.com>, Felix Kannemann
 ! <felix.kannemann@dal.ca>, Erin R. Johnson <erin.johnson@dal.ca>,
 ! Ross M. Dickson <ross.dickson@dal.ca>, Hartmut Schmider
-! <hs7@post.queensu.ca>, and Axel D. Becke <axel.becke@dal.ca>
+! <hs7@post.queensu.ca>, Kyle R. Bryenton <kyle.bryenton@gmail.com>,
+! and Axel D. Becke <axel.becke@dal.ca>
 !
 ! postg is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -37,96 +38,156 @@ program postg
 
   type(molecule) :: mol
   type(tmesh) :: mesh
-  character*(mline) :: line, wfnfil, hfword
+  character*(mline) :: wfnfil, hfword
   logical :: ok, usec9
-  integer :: i, narg, idx, lp
-  real*8 :: qpro, c1br, c2br, egauss, ntotal
+  integer :: i, narg, narg_i, idx, lp
+  real*8 :: qpro, egauss, ntotal
   character*11 :: wfnext
+
+  integer, parameter :: buffer_arr_siz = 10
+  character(len=100) :: buffer_arr(buffer_arr_siz)
+  real*8 :: xdm_temp, xdm_a1, xdm_a2, z_damp
+  integer :: i_code, xdm_damping
 
   ! init
   chf = 0d0
   call atomic_init()
 
-  ! read command line
+  ! Initialize Input Buffer
   narg = command_argument_count()
+  narg_i = 1
   if (narg < 3) goto 999
-  call getarg(1,line)
-  read (line,*,err=999) c1br
-  call getarg(2,line)
-  read (line,*,err=999) c2br
-  call getarg(3,line)
-  wfnfil = adjustl(trim(line))
+  do narg_i = 1, min(narg, 10)
+      call getarg(narg_i, buffer_arr(narg_i))
+  end do
+  narg_i = 1
+
+  ! The first 1-3 lines are BJ/Z Damping Parameters
+  ! _Interpretted as_    _As entered_
+  ! BJ Damping, a1, a2 = BJ float float
+  !                    = float float
+  ! Z Damping, z_damp  = Z float
+  !                    = float
+  read(buffer_arr(narg_i),'(G100.00)', iostat=i_code) xdm_temp
+  if (i_code==0) then
+      ! Increment and check for a2
+      read(buffer_arr(narg_i+1),'(G100.100)', iostat=i_code) xdm_temp
+      if (i_code==0) then
+          ! Both a1 and a2 were found, must be BJ damping
+          xdm_damping = 1
+          read(buffer_arr(narg_i),*,iostat=i_code,err=999) xdm_a1
+          read(buffer_arr(narg_i+1),*,iostat=i_code,err=999) xdm_a2
+          narg_i = narg_i + 2
+      else
+          ! Only a1 was found, must be Z damping
+          xdm_damping = 2
+          read(buffer_arr(narg_i),*,iostat=i_code,err=999) z_damp
+          narg_i = narg_i + 1
+      end if
+  else
+      ! It's a string, so it should be either "BJ" or "Z"
+      select case (trim(lower(buffer_arr(narg_i))))
+      case('bj', 'bj_damp') ! Currently the default, so technically redundant
+          xdm_damping = 1 ;
+          read(buffer_arr(narg_i+1),*,iostat=i_code,err=999) xdm_a1
+          read(buffer_arr(narg_i+2),*,iostat=i_code,err=999) xdm_a2
+          narg_i = narg_i + 3
+      case('z', 'z_damp')
+          xdm_damping = 2 ;
+          read(buffer_arr(narg_i+1),*,iostat=i_code,err=999) z_damp
+          narg_i = narg_i + 2
+      case default
+          ! Input unrecognized, crash
+          write (iout,'("Input Unrecognized: ",A)') buffer_arr(narg_i)
+          goto 999
+      end select
+  end if
+
+  ! Write initial header information
+  write(iout,'("* POSTG OUTPUT")')
+  if (xdm_damping == 1) then
+      write(iout,'("Damping Type  BJ-Damping")')
+      write(iout,'("a1        ",F12.6)') xdm_a1
+      write(iout,'("a2(ang)   ",F12.6)') xdm_a2
+      xdm_a2=xdm_a2/0.52917720859d0
+  else if (xdm_damping == 2) then
+      write(iout,'("Damping Type  Z-Damping")')
+      write(iout,'("z_damp  ",I12)') nint(z_damp)
+  end if
+
+  ! The next input is the wavefunction file
+  wfnfil = trim(buffer_arr(narg_i))
   inquire(file=wfnfil,exist=ok)
   if (.not.ok) then
-     write (iout,'("wfn file not found: ",A)') trim(wfnfil)
-     stop 1
-  endif
-
-  ! header and convert a2
-  WRITE(IOUT,'("* POSTG OUTPUT")')
-  WRITE(IOUT,'("a1          ",F12.6)') c1br
-  WRITE(IOUT,'("a2(ang)     ",F12.6)') c2br
-  c2br=c2br/0.52917720859d0
-
-  if (narg >= 4) then
-     call getarg(4,line)
-     read (line,*,err=999) hfword
-     lp = 1
-     if (.not.isreal(chf,hfword,lp)) then
-        if (trim(lower(hfword)) == "blyp") then
-           chf = chf_blyp
-           write(iout,'("a_hf        blyp")')
-        elseif (trim(lower(hfword)) == "b3lyp") then
-           chf = chf_b3lyp
-           write(iout,'("a_hf        b3lyp")')
-        elseif (trim(lower(hfword)) == "bhandhlyp" .or. trim(lower(hfword)) == "bhandh"&
-           .or. trim(lower(hfword)) == "bhah" .or. trim(lower(hfword)) == "bhahlyp") then
-           chf = chf_bhahlyp
-           write(iout,'("a_hf        bhandhlyp")')
-        elseif (trim(lower(hfword)) == "camb3lyp" .or. trim(lower(hfword)) == "cam-b3lyp" ) then
-           chf = chf_camb3lyp
-           write(iout,'("a_hf        camb3lyp")')
-        elseif (trim(lower(hfword)) == "pbe") then
-           chf = chf_pbe
-           write(iout,'("a_hf        pbe")')
-        elseif (trim(lower(hfword)) == "pbe0") then
-           chf = chf_pbe0
-           write(iout,'("a_hf        pbe0")')
-        elseif (trim(lower(hfword)) == "lcwpbe" .or. trim(lower(hfword)) == "lc-wpbe") then
-           chf = chf_lcwpbe
-           write(iout,'("a_hf        lcwpbe")')
-        elseif (trim(lower(hfword)) == "pw86" .or. trim(lower(hfword)) == "pw86pbe") then
-           chf = chf_pw86
-           write(iout,'("a_hf        pw86pbe")')
-        elseif (trim(lower(hfword)) == "b971" .or. trim(lower(hfword)) == "b97-1") then
-           chf = chf_b971
-           write(iout,'("a_hf        b971")')
-        elseif (trim(lower(hfword)) == "hf") then
-           chf = 1.0d0
-           write(iout,'("a_hf        hf")')
-        else
-           chf = chf_fromfile
-           call frevol_read_file(hfword)
-        endif
-     else
-        write(iout,'("a_hf        ",f12.6)') chf
-     endif
-  else
-     write(iout,'("a_hf        ",f12.6)') chf
-  endif
-
-  ! optional keywords
-  usec9 = .false.
-  if (narg >= 5) then
-     do i = 5, narg
-        call getarg(i,line)
-        if (trim(lower(line)) == 'c9') then
-           usec9 = .true.
-        else
-           call error("postg","unknown keyword " // trim(line),2)
-        endif
-     end do
+      write (iout,'("wfn file not found: ",A)') wfnfil
+      stop 1
   end if
+  narg_i = narg_i + 1
+
+  ! The next input is the functional (if unknown, read HF mixing fraction from file)
+  if (narg_i <= narg) then
+      hfword = trim(lower(buffer_arr(narg_i)))  ! KRB 2024-01-28 Made it so it trimmed and lowered only on assignment
+      lp = 1
+      if (.not.isreal(chf,hfword,lp)) then
+          if (hfword == "blyp") then
+              chf = chf_blyp
+              write(iout,'("a_hf          blyp")')
+          elseif (hfword == "b3lyp") then
+              chf = chf_b3lyp
+              write(iout,'("a_hf          b3lyp")')
+          elseif (hfword == "bhandhlyp" .or. hfword == "bhandh"&
+              .or. hfword == "bhah" .or. hfword == "bhahlyp") then
+              chf = chf_bhahlyp
+              write(iout,'("a_hf          bhandhlyp")')
+          elseif (hfword == "camb3lyp" .or. hfword == "cam-b3lyp" ) then
+              chf = chf_camb3lyp
+              write(iout,'("a_hf          camb3lyp")')
+          elseif (hfword == "pbe") then
+              chf = chf_pbe
+              write(iout,'("a_hf          pbe")')
+          elseif (hfword == "pbe0") then
+              chf = chf_pbe0
+              write(iout,'("a_hf          pbe0")')
+          elseif (hfword == "lcwpbe" .or. hfword == "lc-wpbe") then
+              chf = chf_lcwpbe
+              write(iout,'("a_hf          lcwpbe")')
+          elseif (hfword == "pw86" .or. hfword == "pw86pbe") then
+              chf = chf_pw86
+              write(iout,'("a_hf          pw86pbe")')
+          elseif (hfword == "b971" .or. hfword == "b97-1") then
+              chf = chf_b971
+              write(iout,'("a_hf          b971")')
+          elseif (hfword == "hf") then
+              chf = 1.0d0
+              write(iout,'("a_hf          hf")')
+          else
+              chf = chf_fromfile
+              call frevol_read_file(hfword)
+          endif
+      else
+          write(iout,'("a_hf          ",f12.6)') chf
+      endif
+  else
+      write(iout,'("a_hf          ",f12.6)') chf
+  end if
+  narg_i = narg_i + 1
+
+  ! If any more lines exist, they're optional keywords. 
+  ! Currently, only "C9" exists at this point. 
+  ! If more are encountered, call an error.
+  usec9 = .false.
+  do
+      if (narg_i > narg) exit
+      select case (trim(lower(buffer_arr(narg_i))))
+      case('c9')
+          usec9 = .true.
+          write(iout,'("use_c9        ",L)') usec9
+      case default
+          call error("postg","unknown keyword " // buffer_arr(narg_i),2)
+      end select
+      narg_i = narg_i + 1
+  end do
+
 
   ! read wfn and output some info
   idx = index(wfnfil,'.',.true.)
@@ -215,8 +276,13 @@ program postg
   enddo
   write (iout,'("#")')
 
-  call edisp(mol,c1br,c2br,egauss,usec9)
-
+  if (xdm_damping == 1) then
+      call edisp_bj(mol,xdm_a1,xdm_a2,egauss,usec9)
+  else if (xdm_damping == 2) then
+      call edisp_z(mol,z_damp,egauss,usec9)
+  else
+      call error("postg","Unknown xdm_damping value at edisp() call",2)
+  end if
   stop 
 
 999 continue

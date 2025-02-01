@@ -21,7 +21,7 @@ module wfnmod
   implicit none
 
   private
-  public :: atomin, readwfn, readwfx, readfchk, readtck, readmolden, evalwfn, edisp
+  public :: atomin, readwfn, readwfx, readfchk, readtck, readmolden, evalwfn, edisp_bj, edisp_z
 
   ! double factorials minus one
   integer, parameter :: dfacm1(0:8) = (/1,1,1,2,3,8,15,48,105/) 
@@ -2119,7 +2119,7 @@ contains
    df=2.d0/3.d0*(2.d0*x-x**2-3.d0)/(x-2.d0)**2*expo23
  end subroutine xfuncs
 
- subroutine edisp(m,a1,a2,egauss,usec9)
+ subroutine edisp_bj(m,a1,a2,egauss,usec9)
    type(molecule), intent(in) :: m
    real*8, intent(in) :: a1, a2, egauss
    logical, intent(in) :: usec9
@@ -2246,7 +2246,174 @@ contains
    enddo
    write (iout,'("#"/)')
    
- end subroutine edisp
+ end subroutine edisp_bj
+
+
+
+
+
+
+
+
+
+  ! K R Bryenton 2024-01-28
+  ! Z-damping routine for XDM(Z)
+  ! This routine uses atomic-damping rather than BJ damping
+  subroutine edisp_z(m,z_damp,egauss,usec9)
+   type(molecule), intent(in) :: m
+   real*8, intent(in) :: z_damp, egauss
+   logical, intent(in) :: usec9
+
+   integer :: i, j, k, k1, k2
+   real*8 :: d, atpol(m%n), fac, zinvz, c6, c8, c10, zinv
+   real*8 :: c6com, c8com, c10com, xij(3), ifac
+   real*8 :: e, f(3,m%n), q(3,m%n,3,m%n), qfac
+   real*8 :: c9, qi, qj, qk
+
+   real*8 :: damp6, damp8, damp10
+
+!   real*8 :: a1, a2, rc, rvdw
+!
+!   a1 = z_damp
+!   a2 = z_damp
+
+   do i = 1, m%n
+      if (m%z(i) < 1) cycle
+      atpol(i) = m%v(i) * frepol(m%z(i)) / frevol(m%z(i))
+      ! write (iout,'("MOMENT",X,1p,2(E18.10,X))') m%mm(1,i), atpol(i)
+   enddo
+
+   write (iout,'("coefficients and distances (a.u.)")')
+   write (iout,'("# i  j       dij            C6               C8               C10              Zinv         Zinvz")')
+   e = 0d0
+   f = 0d0
+   q = 0d0
+   do i = 1, m%n
+      if (m%z(i) < 1) cycle
+      do j = i, m%n
+         if (m%z(j) < 1) cycle
+         xij = m%x(:,j)-m%x(:,i)
+         d = sqrt(dot_product(xij,xij))
+         fac = atpol(i)*atpol(j)/(m%mm(1,i)*atpol(j)+m%mm(1,j)*atpol(i))
+         c6 = fac*m%mm(1,i)*m%mm(1,j)
+         c8 = 1.5d0*fac*(m%mm(1,i)*m%mm(2,j)+m%mm(2,i)*m%mm(1,j))
+         c10 = 2.d0*fac*(m%mm(1,i)*m%mm(3,j)+m%mm(3,i)*m%mm(1,j))&
+            +4.2d0*fac*m%mm(2,i)*m%mm(2,j)
+         !rc = (sqrt(c8/c6) + sqrt(sqrt(c10/c6)) +&
+         !   sqrt(c10/c8)) / 3.D0
+         !rvdw = a1 * rc + a2
+         zinv = 1d0/(m%z(i)+m%z(j))
+         zinvz = zinv * z_damp
+         damp6 = c6 * zinvz
+         damp8 = c8 * zinvz
+         damp10 = c10 * zinvz
+         if (d > 1d-5) then
+            !e = e - c6 / (rvdw**6 + d**6) - c8 / (rvdw**8+d**8) - &
+            !   c10 / (rvdw**10 + d**10)
+            e = e - c6 / (d**6 + damp6) - c8 / (d**8 + damp8) - c10 /  (d**10 + damp10)
+            !c6com = 6.d0*c6*d**4/(rvdw**6+d**6)**2
+            !c8com = 8.d0*c8*d**6/(rvdw**8+d**8)**2
+            !c10com = 10.d0*c10*d**8/(rvdw**10+d**10)**2
+            c6com = 6.d0*c6*d**4/(d**6 + damp6)**2
+            c8com = 8.d0*c8*d**6/(d**8 + damp8)**2
+            c10com = 10.d0*c10*d**8/(d**10 + damp10)**2
+            f(:,i) = f(:,i) + (c6com+c8com+c10com) * xij
+            f(:,j) = f(:,j) - (c6com+c8com+c10com) * xij
+            do k1 = 1, 3
+               do k2 = 1, 3
+                  if (k1 == k2) then
+                     ifac = 1d0
+                  else
+                     ifac = 0d0
+                  endif
+                  qfac = &
+                     !c6com  * (-ifac - 4*xij(k1)*xij(k2)/d**2 + 12*xij(k1)*xij(k2)*d**4/(rvdw**6+d**6)) + &
+                     !c8com  * (-ifac - 6*xij(k1)*xij(k2)/d**2 + 16*xij(k1)*xij(k2)*d**6/(rvdw**8+d**8)) + &
+                     !c10com * (-ifac - 8*xij(k1)*xij(k2)/d**2 + 20*xij(k1)*xij(k2)*d**8/(rvdw**10+d**10))
+                     c6com  * (-ifac - 4*xij(k1)*xij(k2)/d**2 + 12*xij(k1)*xij(k2)*d**4/(d**6+damp6)) + &
+                     c8com  * (-ifac - 6*xij(k1)*xij(k2)/d**2 + 16*xij(k1)*xij(k2)*d**6/(d**8+damp8)) + &
+                     c10com * (-ifac - 8*xij(k1)*xij(k2)/d**2 + 20*xij(k1)*xij(k2)*d**8/(d**10+damp10))
+                  q(k1,i,k2,j) = qfac
+                  q(k2,j,k1,i) = qfac
+               enddo
+            enddo
+         endif
+         write (iout,'(I3,X,I3,1p,E14.6,X,3(E16.9,X),2(E13.6,X))') &
+            i, j, d, c6, c8, c10, zinv, zinvz
+      end do
+   end do
+   write (iout,'("#")')
+
+   if (usec9) then
+      write (iout,'("three-body dispersion coefficients (a.u.)")')
+      write (iout,'("# i  j  k            C9")')
+      do i = 1, m%n
+         if (m%z(i) < 1) cycle
+         do j = i, m%n
+            if (m%z(j) < 1) cycle
+            do k = j, m%n
+               if (m%z(k) < 1) cycle
+
+               qi = m%mm(1,i) / atpol(i)
+               qj = m%mm(1,j) / atpol(j)
+               qk = m%mm(1,k) / atpol(k)
+
+               c9 = m%mm(1,i)*m%mm(1,j)*m%mm(1,k)* (qi+qj+qk) / ((qi+qj)*(qi+qk)*(qj+qk))
+               write (iout,'(3(I3,X)1p,E16.9)') i, j, k, c9
+
+            end do
+         end do
+      end do
+      write (iout,'("#")')
+   end if
+
+   ! sum rules for the second derivatives
+   do i = 1, m%n
+      do k1 = 1, 3
+         do k2 = 1, 3
+            q(k1,i,k2,i) = 0d0
+            do j = 1, m%n
+               if (j == i) cycle
+               q(k1,i,k2,i) = q(k1,i,k2,i) - q(k1,i,k2,j)
+            enddo
+         enddo
+      enddo
+   enddo
+
+   write (iout,'("dispersion energy ",1p,E20.12)') e
+   write (iout,'("scf energy ",1p,E20.12)') egauss
+   write (iout,'("total energy (SCF+XDM) ",1p,E20.12)') egauss+e
+   write (iout,'("dispersion forces ")')
+   write (iout,'("# i          Fx                   Fy                   Fz")')
+   do i = 1, m%n
+      write (iout,'(I3,X,1p,3(E20.12,X))') i, f(:,i)
+   enddo
+   write (iout,'("#")')
+   write (iout,'("dispersion force constant matrix ")')
+   write (iout,'("# i  xyz   j   xyz    Exixj ")')
+   do i = 1, m%n
+      do k1 = 1, 3
+         do j = 1, i-1
+            do k2 = 1, 3
+               write (iout,'(4(I3,X),1p,E20.12)') i, k1, j, k2, q(k1,i,k2,j)
+            enddo
+         enddo
+         do k2 = 1, k1
+            write (iout,'(4(I3,X),1p,E20.12)') i, k1, i, k2, q(k1,i,k2,i)
+         enddo
+      enddo
+   enddo
+   write (iout,'("#"/)')
+
+ end subroutine edisp_z
+
+
+
+
+
+
+
+
 
  function read_integers(lu,n) result(x)
    integer, intent(in) :: lu, n
