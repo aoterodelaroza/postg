@@ -46,7 +46,7 @@ program postg
 
   integer, parameter :: buffer_arr_siz = 10
   character(len=100) :: buffer_arr(buffer_arr_siz)
-  real*8 :: xdm_temp, xdm_a1, xdm_a2, z_damp
+  real*8 :: xdm_temp, c1br, c2br, z_damp
   integer :: i_code, xdm_damping
 
   ! init
@@ -75,8 +75,8 @@ program postg
       if (i_code==0) then
           ! Both a1 and a2 were found, must be BJ damping
           xdm_damping = 1
-          read(buffer_arr(narg_i),*,iostat=i_code,err=999) xdm_a1
-          read(buffer_arr(narg_i+1),*,iostat=i_code,err=999) xdm_a2
+          read(buffer_arr(narg_i),*,iostat=i_code,err=999) c1br
+          read(buffer_arr(narg_i+1),*,iostat=i_code,err=999) c2br
           narg_i = narg_i + 2
       else
           ! Only a1 was found, must be Z damping
@@ -89,8 +89,8 @@ program postg
       select case (trim(lower(buffer_arr(narg_i))))
       case('bj', 'bj_damp') ! Currently the default, so technically redundant
           xdm_damping = 1 ;
-          read(buffer_arr(narg_i+1),*,iostat=i_code,err=999) xdm_a1
-          read(buffer_arr(narg_i+2),*,iostat=i_code,err=999) xdm_a2
+          read(buffer_arr(narg_i+1),*,iostat=i_code,err=999) c1br
+          read(buffer_arr(narg_i+2),*,iostat=i_code,err=999) c2br
           narg_i = narg_i + 3
       case('z', 'z_damp')
           xdm_damping = 2 ;
@@ -107,9 +107,9 @@ program postg
   write(iout,'("* POSTG OUTPUT")')
   if (xdm_damping == 1) then
       write(iout,'("Damping Type  BJ-Damping")')
-      write(iout,'("a1        ",F12.6)') xdm_a1
-      write(iout,'("a2(ang)   ",F12.6)') xdm_a2
-      xdm_a2=xdm_a2/0.52917720859d0
+      write(iout,'("a1        ",F12.6)') c1br
+      write(iout,'("a2(ang)   ",F12.6)') c2br
+      c2br=c2br/0.52917720859d0
   else if (xdm_damping == 2) then
       write(iout,'("Damping Type  Z-Damping")')
       write(iout,'("z_damp  ",I12)') nint(z_damp)
@@ -277,7 +277,7 @@ program postg
   write (iout,'("#")')
 
   if (xdm_damping == 1) then
-      call edisp_bj(mol,xdm_a1,xdm_a2,egauss,usec9)
+      call edisp_bj(mol,c1br,c2br,egauss,usec9)
   else if (xdm_damping == 2) then
       call edisp_z(mol,z_damp,egauss,usec9)
   else

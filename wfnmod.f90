@@ -2251,14 +2251,10 @@ contains
 
 
 
-
-
-
-
-
   ! K R Bryenton 2024-01-28
   ! Z-damping routine for XDM(Z)
   ! This routine uses atomic-damping rather than BJ damping
+  ! TODO: Merge edisp_bj and edisp_z together
   subroutine edisp_z(m,z_damp,egauss,usec9)
    type(molecule), intent(in) :: m
    real*8, intent(in) :: z_damp, egauss
@@ -2271,11 +2267,6 @@ contains
    real*8 :: c9, qi, qj, qk
 
    real*8 :: damp6, damp8, damp10
-
-!   real*8 :: a1, a2, rc, rvdw
-!
-!   a1 = z_damp
-!   a2 = z_damp
 
    do i = 1, m%n
       if (m%z(i) < 1) cycle
@@ -2299,21 +2290,13 @@ contains
          c8 = 1.5d0*fac*(m%mm(1,i)*m%mm(2,j)+m%mm(2,i)*m%mm(1,j))
          c10 = 2.d0*fac*(m%mm(1,i)*m%mm(3,j)+m%mm(3,i)*m%mm(1,j))&
             +4.2d0*fac*m%mm(2,i)*m%mm(2,j)
-         !rc = (sqrt(c8/c6) + sqrt(sqrt(c10/c6)) +&
-         !   sqrt(c10/c8)) / 3.D0
-         !rvdw = a1 * rc + a2
          zinv = 1d0/(m%z(i)+m%z(j))
          zinvz = zinv * z_damp
          damp6 = c6 * zinvz
          damp8 = c8 * zinvz
          damp10 = c10 * zinvz
          if (d > 1d-5) then
-            !e = e - c6 / (rvdw**6 + d**6) - c8 / (rvdw**8+d**8) - &
-            !   c10 / (rvdw**10 + d**10)
             e = e - c6 / (d**6 + damp6) - c8 / (d**8 + damp8) - c10 /  (d**10 + damp10)
-            !c6com = 6.d0*c6*d**4/(rvdw**6+d**6)**2
-            !c8com = 8.d0*c8*d**6/(rvdw**8+d**8)**2
-            !c10com = 10.d0*c10*d**8/(rvdw**10+d**10)**2
             c6com = 6.d0*c6*d**4/(d**6 + damp6)**2
             c8com = 8.d0*c8*d**6/(d**8 + damp8)**2
             c10com = 10.d0*c10*d**8/(d**10 + damp10)**2
@@ -2327,9 +2310,6 @@ contains
                      ifac = 0d0
                   endif
                   qfac = &
-                     !c6com  * (-ifac - 4*xij(k1)*xij(k2)/d**2 + 12*xij(k1)*xij(k2)*d**4/(rvdw**6+d**6)) + &
-                     !c8com  * (-ifac - 6*xij(k1)*xij(k2)/d**2 + 16*xij(k1)*xij(k2)*d**6/(rvdw**8+d**8)) + &
-                     !c10com * (-ifac - 8*xij(k1)*xij(k2)/d**2 + 20*xij(k1)*xij(k2)*d**8/(rvdw**10+d**10))
                      c6com  * (-ifac - 4*xij(k1)*xij(k2)/d**2 + 12*xij(k1)*xij(k2)*d**4/(d**6+damp6)) + &
                      c8com  * (-ifac - 6*xij(k1)*xij(k2)/d**2 + 16*xij(k1)*xij(k2)*d**6/(d**8+damp8)) + &
                      c10com * (-ifac - 8*xij(k1)*xij(k2)/d**2 + 20*xij(k1)*xij(k2)*d**8/(d**10+damp10))
