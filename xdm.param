@@ -101,6 +101,10 @@ olyp          0.6170   0.8653   14.1  49
 bpbe          0.5023   1.3961   20.4  49
 bp86          0.8538   0.6415   16.9  49
 
+# gaussian basis set, aug-cc-pvtz (Z Damping)
+functional    z_damp            MAPD nset
+lcwpbe        138857             6.2  49
+
 # gaussian basis set, aug-cc-pvdz
 functional      a1     a2(ang)  MAPD nset
 pw86pbe       0.6736   1.9327   16.8  49
