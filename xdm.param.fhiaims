@@ -3,6 +3,10 @@
 # Kyle Bryenton - 2024-09-04
 # Supplemented with Tier2_Aug2 for Standard Functionals on 2024-09-12
 
+# HSE is:
+# xc hse06 0.11
+# hse_unit bohr-1
+
 --- STANDARD FUNCTIONALS ---
 
 # defaults_2020_intermediate
