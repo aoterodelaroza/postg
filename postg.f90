@@ -286,9 +286,15 @@ program postg
   stop 
 
 999 continue
-  write (iout,'(/"Usage: postg a1 a2(angstrom) wfnfile [a_hf] [optional]")')
+  write (iout,'(/"Usage: postg [damp] wfnfile [a_hf] [optional]")')
   write (iout,*)
-  write (iout,'("  a1,a2 = damping function coefficients. See: http://schooner.chem.dal.ca/wiki/XDM ")')
+  write (iout,'("  damp = Damping function coefficients. One of: ")')
+  write (iout,'("         BJ Damping:   BJ a1 a2(ang)")')
+  write (iout,'("                       a1 a2(ang)")')
+  write (iout,'("         Z Damping:    Z z_damp")')
+  write (iout,'("                       z_damp")')
+  write (iout,'("         Note: a1, a2(ang), and z_damp are floating point values")')
+  write (iout,'("         See: https://erin-r-johnson.github.io/software/ ")')
   write (iout,*)
   write (iout,'("  wfnfile = Gaussian wfn/wfx file ")')
   write (iout,*)
@@ -301,6 +307,8 @@ program postg
   write (iout,*)
   write (iout,'("  optional = an optional keyword. One of: ")')
   write (iout,'("    c9: calculate the C9 dispersion coefficients (no contribution to the energy).")')
+!  write (iout,'("    xcdm: calculate same- and opposite-spin dynamical correlation contribution")')
+!  write (iout,'("          to the exchange-hole dipole moment (contributes to the energy).")')
   stop 1
 
 END program postg
