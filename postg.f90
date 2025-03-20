@@ -39,7 +39,7 @@ program postg
   type(molecule) :: mol
   type(tmesh) :: mesh
   character*(mline) :: wfnfil, hfword
-  logical :: ok, usec9
+  logical :: ok, usec9, usexcdm
   integer :: i, narg, narg_i, idx, lp
   real*8 :: qpro, egauss, ntotal
   character*11 :: wfnext
@@ -173,15 +173,21 @@ program postg
   narg_i = narg_i + 1
 
   ! If any more lines exist, they're optional keywords. 
-  ! Currently, only "C9" exists at this point. 
+  ! - c9: calculate the C9 dispersion coefficients (no contribution to the energy).
+  ! - xcdm: calculate same- and opposite-spin dynamical correlation contribution
+  ! -       to the exchange-hole dipole moment (contributes to the energy).
   ! If more are encountered, call an error.
   usec9 = .false.
+  usexcdm = .false.
   do
       if (narg_i > narg) exit
       select case (trim(lower(buffer_arr(narg_i))))
       case('c9')
           usec9 = .true.
           write(iout,'("use_c9        ",L)') usec9
+      case('xcdm','c')
+          usexcdm = .true.
+          write(iout,'("use_xcdm      ",L)') usexcdm
       case default
           call error("postg","unknown keyword " // buffer_arr(narg_i),2)
       end select
@@ -307,8 +313,8 @@ program postg
   write (iout,*)
   write (iout,'("  optional = an optional keyword. One of: ")')
   write (iout,'("    c9: calculate the C9 dispersion coefficients (no contribution to the energy).")')
-!  write (iout,'("    xcdm: calculate same- and opposite-spin dynamical correlation contribution")')
-!  write (iout,'("          to the exchange-hole dipole moment (contributes to the energy).")')
+  write (iout,'("    xcdm: calculate same- and opposite-spin dynamical correlation contribution")')
+  write (iout,'("          to the exchange-hole dipole moment (contributes to the energy).")')
   stop 1
 
 END program postg
