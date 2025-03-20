@@ -68,7 +68,7 @@ program postg
   !                    = float float
   ! Z Damping, z_damp  = Z float
   !                    = float
-  read(buffer_arr(narg_i),'(G100.00)', iostat=i_code) xdm_temp
+  read(buffer_arr(narg_i),'(G100.100)', iostat=i_code) xdm_temp
   if (i_code==0) then
       ! Increment and check for a2
       read(buffer_arr(narg_i+1),'(G100.100)', iostat=i_code) xdm_temp
