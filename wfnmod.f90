@@ -2058,11 +2058,11 @@ contains
 
  end subroutine propts
 
- subroutine bhole(rho,quad,hnorm,b)
+ subroutine bhole(rho,quad,hnorm,b,uinv)
    use param
 
    real*8, intent(in) :: rho, quad, hnorm
-   real*8, intent(out) :: b 
+   real*8, intent(out) :: b, uinv
 
    real*8 :: rhs, x0, shift, x, x1, expo, prefac, alf, f, df
    integer :: i
@@ -2102,6 +2102,7 @@ contains
    prefac=rho/expo
    alf=(8.d0*pi*prefac/hnorm)**third
    b=x/alf
+   uinv=dabs(b/(1-expo-0.5d0*x*expo))
    return
 1001 format(' ','bhole: newton algorithm fails to converge!')
 1002 format(' ','bhole: newton algorithm fails to initialize!')
