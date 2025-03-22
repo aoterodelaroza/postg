@@ -51,6 +51,9 @@ program postg
 
   ! init
   chf = 0d0
+  c1br = 0d0
+  c2br = 0d0
+  z_damp = 0d0
   call atomic_init()
 
   ! Initialize Input Buffer
