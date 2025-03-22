@@ -282,13 +282,7 @@ program postg
   enddo
   write (iout,'("#")')
 
-  if (xdm_damping == 1) then
-      call edisp_bj(mol,c1br,c2br,egauss,usec9)
-  else if (xdm_damping == 2) then
-      call edisp_z(mol,z_damp,egauss,usec9)
-  else
-      call error("postg","Unknown xdm_damping value at edisp() call",2)
-  end if
+  call edisp(mol,c1br,c2br,z_damp,egauss,usec9,xdm_damping)
   stop 
 
 999 continue
