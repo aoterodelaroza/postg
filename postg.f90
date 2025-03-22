@@ -254,7 +254,7 @@ program postg
   write (iout,'("nelec (promol)",F12.6)') qpro
 
   ! evaluate the density, etc. on the grid
-  call evalwfn(mol,mesh)
+  call evalwfn(mol,mesh,usexcdm)
   write (iout,'("nelec, alpha  ",F12.6)') sum(mesh%w * mesh%rho(:,1))
   write (iout,'("nelec, beta   ",F12.6)') sum(mesh%w * mesh%rho(:,2))
   ntotal = sum(mesh%w * (mesh%rho(:,1)+mesh%rho(:,2)))
