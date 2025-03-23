@@ -6,8 +6,9 @@
 !         |_|                 |___/ 
 !    
 ! postg is a program that calculates the exchange-hole dipole moment
-! (XDM) model dispersion coefficients and energy using gaussian-style
-! wfn and wfx files.
+! (XDM) or exchange-correlation hole dipole moment (XCDM) model dispersion 
+! coefficients and energy using gaussian-style wfn and wfx files. Both
+! models support Becke-Johnson (BJ) and atomic (Z) damping.
 !
 ! Copyright (c) 2013-2025 Alberto Otero de la Roza
 ! <aoterodelaroza@gmail.com>, Felix Kannemann
@@ -178,7 +179,7 @@ program postg
   ! If any more lines exist, they're optional keywords. 
   ! - c9: calculate the C9 dispersion coefficients (no contribution to the energy).
   ! - xcdm: calculate same- and opposite-spin dynamical correlation contribution
-  ! -       to the exchange-hole dipole moment (contributes to the energy).
+  !         to the exchange-hole dipole moment (contributes to the energy).
   ! If more are encountered, call an error.
   usec9 = .false.
   usexcdm = .false.
@@ -308,8 +309,8 @@ program postg
   write (iout,'("         Alternatively, a_hf can also be a text file with rows Z vfree(Z), where Z")')
   write (iout,'("         is the atomic number and vfree(Z) is the free volume for that atom.")')
   write (iout,*)
-  write (iout,'("  optional = an optional keyword. One of: ")')
-  write (iout,'("    c9: calculate the C9 dispersion coefficients (no contribution to the energy).")')
+  write (iout,'("  optional = optional keywords. One of: ")')
+  write (iout,'("      c9: calculate the C9 dispersion coefficients (no contribution to the energy).")')
   write (iout,'("    xcdm: calculate same- and opposite-spin dynamical correlation contribution")')
   write (iout,'("          to the exchange-hole dipole moment (contributes to the energy).")')
   stop 1

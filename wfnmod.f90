@@ -1792,7 +1792,7 @@ contains
      !
      ! ---
      ! 
-     ! Note for Spin Channels:
+     ! Note regarding spin types:
      !     0 - closed, 1 - open, 2 - restricted open, 3 - fractional
 
      type(molecule), intent(inout) :: m
@@ -2088,10 +2088,10 @@ contains
     real*8 :: al, x0(3), ex, xl(3,0:2), xl2
     real*8 :: chi(m%npri,10), maxc(m%npri), dd(3,m%n), d2(m%n)
     real*8 :: phi(m%nmo,10), gg(3), hh(3), quads, drho2, d2rho, taup
-    real*8 :: dsigs, aocc, prho(2), pb(2), puinv(2), pdsigs(2)
+    real*8 :: dsigs, aocc, prho(2), pb(2)
     logical :: ldopri(m%npri,10)
     
-    real*8 :: brcaa(2), brcab(2)
+    real*8 :: puinv(2), pdsigs(2), pbrcaa(2), pbrcab(2)
 
     real*8, parameter :: cutoff_pri = 1d-15
     real*8, parameter :: small = 1d-10
@@ -2205,6 +2205,8 @@ contains
        hh = 0d0
        puinv = 0d0
        pdsigs = 0d0
+       pbrcaa = 0d0
+       pbrcab = 0d0
        if (m%wfntyp == 0) then
           do imo = 1, m%nmo
              aocc = m%occ(imo) * 0.5d0
@@ -2296,10 +2298,12 @@ contains
        else
           call error("evalwfn","wfn type not implemented",2)
        endif
-       call chole(prho, pdsigs, puinv, brcaa, brcab)
+       ! We call the correlation-hole calculation, using the spin-indexed quantities
+       call chole(prho, pdsigs, puinv, pbrcaa, pbrcab)
        !$omp critical (write)
        rho(i,:) = prho(:)
-       b(i,:) = pb(:) + brcaa(:) + brcab(:)
+       ! Augment BR's b with correlation hole contributions
+       b(i,:) = pb(:) + pbrcaa(:) + pbrcab(:)
        !$omp end critical (write)
     enddo ! i = 1, nr
     !$omp end parallel do
