@@ -2091,6 +2091,8 @@ contains
     real*8 :: dsigs, aocc, prho(2), pb(2), puinv(2), pdsigs(2)
     logical :: ldopri(m%npri,10)
     
+    real*8 :: brcaa(2), brcab(2)
+
     real*8, parameter :: cutoff_pri = 1d-15
     real*8, parameter :: small = 1d-10
  
