@@ -1814,7 +1814,7 @@ contains
      if (usexcdm == .false.)
         call propts(m,mesh%n,mesh%x,mesh%rho,mesh%b)
      else
-        call propts_xcdm((m,mesh%n,mesh%x,mesh%rho,mesh%b)
+        call propts_xcdm(m,mesh%n,mesh%x,mesh%rho,mesh%b)
      end if
  
      if (.not.allocated(m%mm)) allocate(m%mm(3,m%n),stat=istat)
@@ -1996,7 +1996,6 @@ contains
              quads = (d2rho - 2d0 * dsigs) / 6d0
              call bhole(prho(1),quads,1d0,pb(1))
              pb(2) = pb(1)
-             puinv(2) = puinv(1)
           endif
        else if (m%wfntyp == 1) then
           nmo1 = (m%nmo + m%mult - 1)/2
@@ -2089,7 +2088,7 @@ contains
     real*8 :: al, x0(3), ex, xl(3,0:2), xl2
     real*8 :: chi(m%npri,10), maxc(m%npri), dd(3,m%n), d2(m%n)
     real*8 :: phi(m%nmo,10), gg(3), hh(3), quads, drho2, d2rho, taup
-    real*8 :: dsigs, aocc, prho(2), pb(2), puinv(2)
+    real*8 :: dsigs, aocc, prho(2), pb(2), puinv(2), pdsigs(2)
     logical :: ldopri(m%npri,10)
     
     real*8, parameter :: cutoff_pri = 1d-15
@@ -2203,6 +2202,7 @@ contains
        gg = 0d0
        hh = 0d0
        puinv = 0d0
+       pdsigs = 0d0
        if (m%wfntyp == 0) then
           do imo = 1, m%nmo
              aocc = m%occ(imo) * 0.5d0
@@ -2220,6 +2220,8 @@ contains
              call bhole(prho(1),quads,1d0,pb(1),puinv(1))
              pb(2) = pb(1)
              puinv(2) = puinv(1)
+             pdsigs(1) = dsigs
+             pdsigs(2) = dsigs
           endif
        else if (m%wfntyp == 1) then
           nmo1 = (m%nmo + m%mult - 1)/2
@@ -2236,6 +2238,7 @@ contains
              dsigs = taup - 0.25d0 * drho2 / max(prho(1),1d-30)
              quads = (d2rho - 2d0 * dsigs) / 6d0
              call bhole(prho(1),quads,1d0,pb(1),puinv(1))
+             pdsigs(1) = dsigs
           endif
           taup = 0d0
           gg = 0d0
@@ -2253,6 +2256,7 @@ contains
              dsigs = taup - 0.25d0 * drho2 / max(prho(2),1d-30)
              quads = (d2rho - 2d0 * dsigs) / 6d0
              call bhole(prho(2),quads,1d0,pb(2),puinv(2))
+             pdsigs(2) = dsigs
           endif
        else if (m%wfntyp == 2) then
           nmo1 = m%nmo - m%mult + 1
@@ -2269,6 +2273,7 @@ contains
              dsigs = taup - 0.25d0 * drho2 / max(prho(2),1d-30)
              quads = (d2rho - 2d0 * dsigs) / 6d0
              call bhole(prho(2),quads,1d0,pb(2),puinv(2))
+             pdsigs(2) = dsigs
           endif
           prho(1) = prho(2)
           do imo = nmo1+1, m%nmo
@@ -2284,24 +2289,21 @@ contains
              dsigs = taup - 0.25d0 * drho2 / max(prho(1),1d-30)
              quads = (d2rho - 2d0 * dsigs) / 6d0
              call bhole(prho(1),quads,1d0,pb(1),puinv(1))
+             pdsigs(1) = dsigs
           endif
        else
           call error("evalwfn","wfn type not implemented",2)
        endif
+       call chole(prho, pdsigs, puinv, brcaa, brcab)
        !$omp critical (write)
        rho(i,:) = prho(:)
-       b(i,:) = pb(:)
-       uinv(i,:) = puinv(:)
+       b(i,:) = pb(:) + brcaa(:) + brcab(:)
        !$omp end critical (write)
     enddo ! i = 1, nr
     !$omp end parallel do
  
   end subroutine propts_xcdm
 
-
-
-
-  
   
   subroutine bhole(rho,quad,hnorm,b,uinv)
     ! Modified by Kyle R Bryenton 2025-03-22
