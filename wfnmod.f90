@@ -2304,11 +2304,45 @@ contains
  
   end subroutine propts_xcdm
 
+
+  subroutine chole(rho,dsigs,uinv,brcaa,brcab)
+     ! Created: Kyle R Bryenton - 2025-03-22
+     ! 
+     ! chole subroutine, used to implement XCDM
+     !     z = Same(aa)- and Opposite(ab)-spin correlation lengths, 10.1063/1.2768530 eqB20
+     ! gamma = XCDM correlation hole coefficients, derived depending on form of 10.1063/1.454274 eq48
+     !     c = Correlation length proportionality coefficients, 10.1002/qua.560520855 eq10
+     !   brc = Correlation-hole dipole contribution from BR model
+ 
+     real*8, intent(in)  :: rho(2), dsigs(2), uinv(2)
+     real*8, intent(out) :: brcaa(2), brcab(2)
+     real*8 :: gammaaa, gammaab, caa, cab
+     real*8 :: zaa, zab
+     integer :: i_spin
+
+     gammaaa = 0.02d0
+     gammaab = 0.60d0
+     caa = 0.88d0
+     cab = 0.63d0
+
+     zaa = caa*sum(uinv(:))
+     zab = cab*sum(uinv(:))
+     do i_spin = 1, 2
+        brcaa(i_spin) = gammaaa*dsigs(i_spin)*zaa**7.0d0/(2.d0+zaa)
+        brcab(i_spin) = gammaab*rho(i_spin)*zab**5.0d0/(1.d0+zab)
+     end do
+  end subroutine chole
+
   
   subroutine bhole(rho,quad,hnorm,b,uinv)
-    ! Modified by Kyle R Bryenton 2025-03-22
-    ! uinv is an optional output parameter
-    ! and is calculated when needed.
+    ! Becke-Roussel (BR) Hole (10.1103/PhysRevA.39.3761)
+    !
+    ! Modified: Kyle R Bryenton 2025-03-22
+    !   Added optional parameter uinv, calculated if needed such as for XCDM
+    !   
+    !  quads = Exchange hole curvature (eq 20b)
+    !      b = Exchange-hole dipole contribution from BR model (eq 22)
+    !   uinv = Absolute inverse of Coulomb potential that occurs due to exchange hole (eq 23)
     use param
  
     real*8, intent(in) :: rho, quad, hnorm
