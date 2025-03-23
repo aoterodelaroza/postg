@@ -1811,7 +1811,7 @@ contains
      
      ! If XCDM is used, we supplement BR's b parameter (which equals the exchange-hole
      ! dipole moment) with same- and opposite-spin dynamical correlation contributions.
-     if (usexcdm == .false.)
+     if (.not.usexcdm) then
         call propts(m,mesh%n,mesh%x,mesh%rho,mesh%b)
      else
         call propts_xcdm(m,mesh%n,mesh%x,mesh%rho,mesh%b)
