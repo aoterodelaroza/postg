@@ -2117,7 +2117,7 @@ contains
     enddo
  
     !$omp parallel do private(dd,d2,ityp,iat,al,ex,l,xl,chi,ldopri,phi,prho,pb,&
-    !$omp taup,gg,hh,aocc,drho2,d2rho,dsigs,quads,nmo1) schedule(dynamic)
+    !$omp taup,gg,hh,aocc,drho2,d2rho,dsigs,quads,nmo1,puinv,pdsigs,pbrcaa,pbrcab) schedule(dynamic)
     do i = 1, nr
        ! calculate distances
        do iat = 1, m%n
