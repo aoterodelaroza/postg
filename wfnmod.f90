@@ -2299,7 +2299,9 @@ contains
           call error("evalwfn","wfn type not implemented",2)
        endif
        ! We call the correlation-hole calculation, using the spin-indexed quantities
-       call chole(prho, pdsigs, puinv, pbrcaa, pbrcab)
+       if (prho(1) > small .or. prho(2) > small) then
+           call chole(prho, pdsigs, puinv, pbrcaa, pbrcab)
+       end if
        !$omp critical (write)
        rho(i,:) = prho(:)
        ! Augment BR's b with correlation hole contributions
@@ -2322,20 +2324,24 @@ contains
  
      real*8, intent(in)  :: rho(2), dsigs(2), uinv(2)
      real*8, intent(out) :: brcaa(2), brcab(2)
-     real*8 :: gammaaa, gammaab, caa, cab
-     real*8 :: zaa, zab
+     real*8 :: gammaaa, gammaab, caa2, cab
+     real*8 :: zaa(2), zab(2) 
      integer :: i_spin
+
+     brcaa = 0.0d0
+     brcab = 0.0d0
 
      gammaaa = 0.02d0
      gammaab = 0.60d0
-     caa = 0.88d0
+     caa2 = 1.76d0 ! = 2 * caa = 2 * 0.88d0
      cab = 0.63d0
 
-     zaa = caa*sum(uinv(:))
-     zab = cab*sum(uinv(:))
+     zab(1) = cab * ( uinv(1) + uinv(2) )
+     zab(2) = zab(1)
      do i_spin = 1, 2
-        brcaa(i_spin) = gammaaa*dsigs(i_spin)*zaa**7.0d0/(2.d0+zaa)
-        brcab(i_spin) = gammaab*rho(i_spin)*zab**5.0d0/(1.d0+zab)
+         zaa(i_spin) = caa2 * uinv(i_spin)
+         brcaa(i_spin) = gammaaa*dsigs(i_spin)*zaa(i_spin)**7/(2.d0+zaa(i_spin))
+         brcab(i_spin) = gammaab*rho(i_spin)*zab(i_spin)**5/(1.d0+zab(i_spin))
      end do
   end subroutine chole
 
@@ -2394,7 +2400,7 @@ contains
     alf=(8.d0*pi*prefac/hnorm)**third
     b=x/alf
     if (present(uinv)) then
-       uinv=dabs(b/(1-expo-0.5d0*x*expo))
+       uinv=dabs(b/(1.0d0-expo-0.5d0*x*expo))
     end if
     return
 1001 format(' ','bhole: newton algorithm fails to converge!')
