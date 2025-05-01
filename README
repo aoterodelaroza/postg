@@ -85,6 +85,14 @@ will calculate the XDM(Z) dispersion energy using the Z-damping parameter
 $z_damp=138857$ and the atomic volumes corresponding to the LC-wPBE 
 functional.
 
+To use XCDM, the new (2025) exchange-correlation-hole dipole moment
+model, with either BJ or Z damping, then append "xcdm" to the end 
+of the input arguments:
+
+
+    postg BJ 0.754 1.102 calc.wfn lcwpbe xcdm
+    postg Z 138857 calc.wfn lcwpbe xcdm
+
 Damping function parameters for common functionals and
 basis sets can be found in https://erin-r-johnson.github.io/software/ .
 The functional keyword can be one of:
@@ -209,6 +217,11 @@ And XDM applied to solid-state calculations:
   (http://dx.doi.org/10.1063/1.4738961)
 * E. R. Johnson and A. Otero-de-la Roza, J. Chem. Theory Comput. **8**, 5124 (2012).
   (http://dx.doi.org/10.1021/ct3006375)
+
+For XCDM and Z-damping:
+
+* K. R. Bryenton and E. R. Johnson, (Manuscript in preparation 2025)
+
 
 Copyright notice
 ----------------

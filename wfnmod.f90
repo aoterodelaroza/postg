@@ -2318,30 +2318,32 @@ contains
      ! 
      ! chole subroutine, used to implement XCDM
      !     z = Same(aa)- and Opposite(ab)-spin correlation lengths, 10.1063/1.2768530 eqB20
-     ! gamma = XCDM correlation hole coefficients, derived depending on form of 10.1063/1.454274 eq48
+     !     g = XCDM correlation hole coefficients, derived depending on form of 10.1063/1.454274 eq48
      !     c = Correlation length proportionality coefficients, 10.1002/qua.560520855 eq10
      !   brc = Correlation-hole dipole contribution from BR model
- 
      real*8, intent(in)  :: rho(2), dsigs(2), uinv(2)
      real*8, intent(out) :: brcaa(2), brcab(2)
-     real*8 :: gammaaa, gammaab, caa2, cab
+     real*8 :: gaa, gab, caa_eff, cab
      real*8 :: zaa(2), zab(2) 
-     integer :: i_spin
-
+     integer :: i_spin, spin_partner(2)
+     ! Initialize
      brcaa = 0.0d0
      brcab = 0.0d0
-
-     gammaaa = 0.02d0
-     gammaab = 0.60d0
-     caa2 = 1.76d0 ! = 2 * caa = 2 * 0.88d0
+     ! Constants
+     gaa = 0.0125309d0
+     gab = 0.5359660d0
      cab = 0.63d0
-
+     ! Adjusted ''effective'' coefficients for spin treatment:
+     caa_eff = 1.76d0    ! zaa = caa * (u_a + u_a); absorb factor of 2
+     spin_partner(1) = 2 ! brcab(1) uses rhos(2)
+     spin_partner(2) = 1 ! brcab(2) uses rhos(1)
+     ! Calculate
      zab(1) = cab * ( uinv(1) + uinv(2) )
      zab(2) = zab(1)
      do i_spin = 1, 2
-         zaa(i_spin) = caa2 * uinv(i_spin)
-         brcaa(i_spin) = gammaaa*dsigs(i_spin)*zaa(i_spin)**7/(2.d0+zaa(i_spin))
-         brcab(i_spin) = gammaab*rho(i_spin)*zab(i_spin)**5/(1.d0+zab(i_spin))
+         zaa(i_spin) = caa_eff * uinv(i_spin)
+         brcaa(i_spin) = gaa*dsigs(i_spin)*zaa(i_spin)**7/(2.d0+zaa(i_spin))
+         brcab(i_spin) = gab*rho(spin_partner(i_spin))*zab(i_spin)**5/(1.d0+zab(i_spin))
      end do
   end subroutine chole
 
