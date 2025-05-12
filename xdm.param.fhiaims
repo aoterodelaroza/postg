@@ -8,6 +8,12 @@
 # Notes:
 #     - a1 and a2(ang) can safely be rounded to 4 decimal places
 #     - z_damp can safely be rounded to the nearest integer
+# 
+#  For LC-wPBE and HSE, the below damping functions are optimized for the following:
+#  !   - LC-wPBEh-00x = xc lc_wpbeh 0.2 0   // hse_unit b
+#  !   - LC-wPBEh-20x = xc lc_wpbeh 0.2 0.2 // hse_unit b
+#  !   - HSE          = xc hse06 0.11       // hse_unit b
+
 
 
 
