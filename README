@@ -95,7 +95,7 @@ of the input arguments:
 
 Damping function parameters for common functionals and
 basis sets can be found in https://erin-r-johnson.github.io/software/ .
-The functional keyword can be one of:
+or in the included xdm.param file. The functional keyword can be one of:
 
 * blyp
 * b3lyp
