@@ -101,6 +101,27 @@ olyp          0.6170   0.8653   14.1  49
 bpbe          0.5023   1.3961   20.4  49
 bp86          0.8538   0.6415   16.9  49
 
+# gaussian basis set, aug-cc-pvtz (XDM with Z Damping)
+functional     z_damp           MAPD nset
+lcwpbe(w=0.4) 138857             6.2  49
+pbe0          189594            12.0  49
+
+# gaussian basis set, aug-cc-pvtz (XCDM with BJ Damping)
+functional      a1     a2(ang)  MAPD nset
+lcwpbe(w=0.4) 1.3618   0.0000    9.7  49
+pbe0          0.7051   2.0701   10.1  49
+
+# gaussian basis set, aug-cc-pvtz (XDM with BJ Damping)
+# Note: KRB 2025-05-11 --- Slightly different values likely due to looser SCF settings
+functional      a1     a2(ang)  MAPD nset
+lcwpbe(w=0.4) 1.0381   0.6136    7.5  49
+pbe0          0.4238   2.6706   10.7  49
+
+# gaussian basis set, aug-cc-pvtz (XCDM with Z Damping)
+functional     z_damp           MAPD nset
+lcwpbe(w=0.4) 156059             6.9  49
+pbe0          206696            11.4  49
+
 # gaussian basis set, aug-cc-pvdz
 functional      a1     a2(ang)  MAPD nset
 pw86pbe       0.6736   1.9327   16.8  49
