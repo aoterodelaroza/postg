@@ -1,8 +1,7 @@
-! Copyright (c) 2013-2016 Alberto Otero de la Roza
-! <aoterodelaroza@gmail.com>, Felix Kannemann
-! <felix.kannemann@dal.ca>, Erin R. Johnson <erin.johnson@dal.ca>,
-! Ross M. Dickson <ross.dickson@dal.ca>, Hartmut Schmider
-! <hs7@post.queensu.ca>, and Axel D. Becke <axel.becke@dal.ca>
+! Copyright (c) 2013-2025 Alberto Otero de la Roza <aoterodelaroza@gmail.com>,
+! Kyle R. Bryenton <kyle.bryenton@gmail.com>, Felix Kannemann <felix.kannemann@dal.ca>,
+! Erin R. Johnson <erin.johnson@dal.ca>, Ross M. Dickson <ross.dickson@dal.ca>,
+! Hartmut Schmider <hs7@post.queensu.ca>, and Axel D. Becke <axel.becke@dal.ca>
 !
 ! postg is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by

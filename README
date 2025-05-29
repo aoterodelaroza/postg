@@ -218,17 +218,20 @@ And XDM applied to solid-state calculations:
 * E. R. Johnson and A. Otero-de-la Roza, J. Chem. Theory Comput. **8**, 5124 (2012).
   (http://dx.doi.org/10.1021/ct3006375)
 
-For XCDM and Z-damping:
+And XCDM and Z-damping:
 
 * K. R. Bryenton and E. R. Johnson, (Manuscript in preparation 2025)
+* A. Becke, J. Chem. Phys. **160**, 20 (2024).
+  (http://dx.doi.org/10.1063/5.0207682)
 
 
 Copyright notice
 ----------------
 
-Copyright (c) 2013-2025 Alberto Otero de la Roza, Felix Kannemann, 
-Erin R. Johnson, Ross M. Dickson, Hartmut Schmider, 
-Kyle R. Bryenton, and Axel D. Becke.
+Copyright (c) 2013-2025 Alberto Otero de la Roza <aoterodelaroza@gmail.com>,
+Kyle R. Bryenton <kyle.bryenton@gmail.com>, Felix Kannemann <felix.kannemann@dal.ca>,
+Erin R. Johnson <erin.johnson@dal.ca>, Ross M. Dickson <ross.dickson@dal.ca>,
+Hartmut Schmider <hs7@post.queensu.ca>, and Axel D. Becke <axel.becke@dal.ca>
 
 postg is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
